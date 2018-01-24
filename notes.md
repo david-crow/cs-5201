@@ -1,4 +1,4 @@
-## CS 5201 - Object-Oriented Numerical Modeling I
+## CS 5201: Object-Oriented Numerical Modeling I
 
 ****
 #### 17 January: Introduction
@@ -136,3 +136,64 @@ So, suffix rules are either built-in or user-defined rules on how to *do somethi
     - and is required to build the target.
 
 `.SUFFIXES: .cpp` tells make which suffixes are significant.
+
+#### 24 January: Modeling
+
+A model is a simplification of a reality.
+
+**Why do we model?**
+- to be able to visualize the entirety of the system
+    - to consider the architecture
+    - to see what the system is capable of
+    - to save costs
+    - to see where the real system is going
+- to manage risk
+- to document the system
+    - "blueprints"
+- to provide insight into unseen problems
+- to provide different "views" of the system
+- "divide and conquer" allows you to break up a *big* project into smaller problems to solve
+
+**The goal of modeling Object-Oriented Programming (OOP)**
+- reusability
+- maintainability
+- modifiability
+- adaptability
+- extendability
+
+**UML: Unified Modeling Language (Basics)**
+
+- Things, relationships (how things relate), and diagrams (groups of things)
+- Things
+    1. Structural (nouns in UML): the static parts of the model, both physical and/or conceptual (e.g. desk or matrix)
+        - **a class - a set of objects with shared attributes and operations**
+        - an interface
+        - a collaboration
+    2. Behavioral (verbs in UML): describe behavior over time
+        - interaction
+        - state machine
+    3. Annotational (the explanatory part of UML)
+        - a note (figure 1)
+        - a constraint (figure 2)
+- **Relationships**
+    1. Dependencies
+    2. Associations
+    3. Generalizations
+- **Diagrams:** any combination of structural things and relationships
+
+**UML (Specifics)**
+- Class diagram (figure 3)
+- Relationships
+    1. Dependency (figure 4)
+        - shows that one thing affects another thing
+    2. Association (figure 5)
+    3. Generalization (figure 6)
+- Template class (figure 7)
+- Example 1 (figure 8)
+- Example 2 (figure 9)
+- Attributes: [vis] name [multiplicity] [:type]
+    - Those in [ ] are optional
+    - Vis: +, -, #
+- Functions: [vis] name [parameter list] [:return type]
+    - Parameter list: [dir] name [:const] [:type]
+        - Dir: in (value), out (reference), inout (reference)
