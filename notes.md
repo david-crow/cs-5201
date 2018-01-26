@@ -1,14 +1,19 @@
 ## CS 5201: Object-Oriented Numerical Modeling I
 
-****
+***
 #### 17 January: Introduction
+****
+
 - Instructor: [Clayton Price](https://sites.google.com/a/mst.edu/price/courses/cs-5201)
 - Grader: [Nathan Jarus](http://web.mst.edu/~nmjxv3/cs5201/)
 - Use the calendar tool on Nathan's website to schedule appointments
 - Use Doxygen tool to format comments
 - Use C++17 for assignments
 
+***
 #### 19 January: Make and Makefiles
+****
+
 make is a unix command. It's part of a utility designed to lead to easier building of programs. The goal is to simplify the process. Many times, the creation of an executable is a very quick, simple, and easy compile command. With just a few files, that suffices. Other times, though, projects have more than just a few files. Also, you may change just one file, so there's no need to rebuild all the files - only those that have changed or that are dependencies of those that have changed. Make can do this. It uses time stamps and it knows the dependencies.
 
 **The basics**
@@ -82,7 +87,10 @@ is no space between the `\` and the newline character.
 6. Command lines are echoed to the standard out.
 7. `-@` will suppress the echo.
 
+***
 #### 22 January: Macros
+***
+
 I sort of think of macros like I do constants.
 
 **Rules**
@@ -137,7 +145,9 @@ So, suffix rules are either built-in or user-defined rules on how to *do somethi
 
 `.SUFFIXES: .cpp` tells make which suffixes are significant.
 
+***
 #### 24 January: Modeling
+***
 
 A model is a simplification of a reality.
 
@@ -197,3 +207,83 @@ A model is a simplification of a reality.
 - Functions: [vis] name [parameter list] [:return type]
     - Parameter list: [dir] name [:const] [:type]
         - Dir: in (value), out (reference), inout (reference)
+
+***
+#### 26 January: Review of C++
+***
+
+**Classes**
+
+```C++
+// --- point.h
+#include "line.h"
+
+class Point
+{
+    private:
+        float m_x;
+        float m_y;
+
+    public:
+        point() {}
+        point(const float x, const float y);
+        float distance(const point p) const;
+        float distance(const line l) const;
+        float get_x() const;
+        float get_y() const;
+}
+
+// --- point.cpp
+#include "point.h"
+#include "line.h"
+#include <math.h>
+
+// point::point() {}
+
+point::point(const float x, const float y)
+{
+    m_x = x;
+    m_y = y;
+}
+
+float point::distance(const point p) const
+{
+    return sqrt((m_x - p.m_x) * (m_x - p.m_x) + (m_y - p.m_y) * (m_y - p.m_y));
+}
+
+float point::distance(const line l) const
+{
+    return l.distance(*this);
+}
+
+float get_x() const {return m_x;}
+
+void set_x(const float x) {m_x = x; return;}
+
+// --- line.h
+class line
+{
+    public:
+        line(const point lp = 0, const point rp = 0);
+        line(const float direction, const float x, const float y);
+        point intersection(const line l) const;
+        float distance(const point p) const;
+        static float parallel_tolerance;
+    
+    private:
+        float m_a, m_b, m_c;
+}
+
+// --- line.cpp
+#include "line.h"
+#include "point.h"
+#include <stdlib.h>
+#include <math.h>
+
+float line::parallel_tolerance = 0.0001;
+
+float line::distance(const point p) const
+{
+    return abs(m_a * p.get_x() + m_b * p.get_y() + m_c) / sqrt(m_a * m_a + m_b * m_b);
+}
+```
