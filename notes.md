@@ -225,33 +225,33 @@ class Point
         float m_y;
 
     public:
-        point() {}
-        point(const float x, const float y);
-        float distance(const point p) const;
-        float distance(const line l) const;
+        Point() {}
+        Point(const float x, const float y);
+        float distance(const Point p) const;
+        float distance(const Line l) const;
         float get_x() const;
         float get_y() const;
-}
+};
 
 // --- point.cpp
 #include "point.h"
 #include "line.h"
 #include <math.h>
 
-// point::point() {}
+// Point::Point() {}
 
-point::point(const float x, const float y)
+Point::Point(const float x, const float y)
 {
     m_x = x;
     m_y = y;
 }
 
-float point::distance(const point p) const
+float Point::distance(const Point p) const
 {
     return sqrt((m_x - p.m_x) * (m_x - p.m_x) + (m_y - p.m_y) * (m_y - p.m_y));
 }
 
-float point::distance(const line l) const
+float Point::distance(const Line l) const
 {
     return l.distance(*this);
 }
@@ -261,18 +261,18 @@ float get_x() const {return m_x;}
 void set_x(const float x) {m_x = x; return;}
 
 // --- line.h
-class line
+class Line
 {
     public:
-        line(const point lp = 0, const point rp = 0);
-        line(const float direction, const float x, const float y);
-        point intersection(const line l) const;
-        float distance(const point p) const;
+        Line(const Point lp = 0, const Point rp = 0);
+        Line(const float direction, const float x, const float y);
+        Point intersection(const Line l) const;w
+        float distance(const Point p) const;
         static float parallel_tolerance;
     
     private:
         float m_a, m_b, m_c;
-}
+};
 
 // --- line.cpp
 #include "line.h"
@@ -280,10 +280,139 @@ class line
 #include <stdlib.h>
 #include <math.h>
 
-float line::parallel_tolerance = 0.0001;
+float Line::parallel_tolerance = 0.0001;
 
-float line::distance(const point p) const
+float Line::distance(const Point p) const
 {
     return abs(m_a * p.get_x() + m_b * p.get_y() + m_c) / sqrt(m_a * m_a + m_b * m_b);
+}
+```
+
+***
+#### 29 January: An Array Class
+***
+
+**The Array Class**
+
+Requirements for our array class
+1. Runtime sizing - using the constructor
+2. Use of the `[ , ]` operator for indexing into the array
+3. Automatic memory management
+4. Array copying facility
+5. Being able to assign a single value to every element of the array
+6. Resizing of my array
+
+```C++
+// array.h
+#ifndef ARRAY_H
+#define ARRAY_H
+
+<template class T>
+class Array // array of T
+{
+public:
+    Array();
+    Array(const int size);
+    Array(const Array<T>& source);
+    ~Array();
+
+    T& operator[](const int i);
+    Array<T>& operator=(const Array<T>& source);
+    Array<T>& operator=(const T s);
+
+    int get_size() const;
+    void set_size(const int size);
+
+private:
+    int m_size;
+    T * ptr_to_data;
+
+    void array_copy(const Array<T>& source);
+};
+
+#include "array.hpp"
+#endif
+
+// array.hpp
+<template class T>
+Array<T>::Array()
+{
+    m_size = 0;
+    ptr_to_data = NULL;
+}
+
+<template class T>
+Array<T>::Array(const int size)
+{
+    m_size = size;
+    ptr_to_data = new T[size];
+}
+
+<template class T>
+Array<T>::Array(const Array<T>& source)
+{
+    m_size = source.m_size;
+    ptr_to_data = new T[m_size];
+    array_copy(source);
+}
+
+<template class T>
+void Array<T>::array_copy(const Array<T>& source)
+{
+    T * p = ptr_to_data + m_size;
+    T * q = source.ptr_to_data + source.m_size;
+
+    while (p > ptr_to_data)
+        *--p = *--q;
+
+    /* equivalently,
+    for (int i = 0; i < m_size; i++)
+        ptr_to_data[i] = source.ptr_to_data[i];
+    */
+
+    return;
+}
+
+<template class T>
+Array<T>::~Array() {delete [] ptr_to_data;}
+
+<template class T>
+T& Array<T>::operator[](const int i)
+{
+    return ptr_to_data[i];
+}
+
+<template class T>
+Array<T>& Array<T>::operator=(const Array<T>& source)
+{
+    if (ptr_to_data != source.ptr_to_data)
+    {
+        set_size(source.m_size);
+        array_copy(source);
+    }
+
+    return *this;
+}
+
+<template class T>
+Array<T>& Array<T>::operator=(const T s)
+{
+    for (int i = 0; i < m_size; i++)
+        ptr_to_data[i] = s;
+
+    return *this;
+}
+
+<template class T>
+void Array<T>::set_size(const int size)
+{
+    if (m_size != size)
+    {
+        delete [] ptr_to_data;
+        m_size = size;
+        ptr_to_data = new T[size];
+    }
+
+    return;
 }
 ```
