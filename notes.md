@@ -416,3 +416,195 @@ void Array<T>::set_size(const int size)
     return;
 }
 ```
+
+#### 31 January: More on Templates
+
+**Templating Functions**
+
+```C++
+template <typename T>
+void swap(T& t1, T& t2)
+{
+    T temp = t1;
+    t1 = t2;
+    t2 = temp;
+    return;
+}
+
+template <typename T>
+int find(const T arr[], const int size, const T& target)
+{
+    bool found = false;
+    int i = 0;
+
+    while (!found && i < size>)
+    {
+        if (arr[i] == target)
+            found = true;
+        else
+            i++;
+    }
+
+    return (found ? i : -1);
+}
+```
+
+Most importantly, your pre-conditions need to recognize the operators used in the code (and whether or not they're available for the templated type).
+
+**Extern Templates**
+
+```C++
+// header.h
+template <class T>
+void BIGFUNC()
+{
+    // ...
+}
+
+// source1.cpp
+#include "header.h"
+void func1()
+{
+    BIGFUNC<int>();
+    // ...
+}
+
+// source2.cpp
+#include "header.h"
+void func2()
+{
+    BIGFUNC<int>();
+    // ...
+}
+```
+
+The result of this is that the compiler creates two copies of `BIGFUNC` with the template instantiated with int in the .o files. It has to discard one. To prevent this,
+
+```C++
+// source2.cpp
+extern template BIGFUNC<int>();
+void func2()
+{
+    // ...
+}
+```
+
+And this prevents the generation of multiple copies of the function.
+
+**`auto`**
+
+`auto` allows your code to deduce a type when allocating memory. It's a signal to the compiler to infer a type based on an initial value.
+
+```C++
+float x = 1.2;
+auto y = 5.6; // double
+auto z = x; // double
+```
+
+But this isn't really useful and *not* what `auto` is good for. If there is not initial value, it won't work. `auto` is useful for using with templates and iterators.
+
+example 1:
+
+```C++
+vector<int> vec;
+auto itr = vec.iterator(); // instead of vector<int>::iterator itr = vec.iterator()
+```
+
+example 2:
+
+```C++
+template<class BuiltType, class Builder>
+void buildSomething(Builder& builder)
+{
+    BuiltType obj = builder.makeObj();
+    // ...
+    return;
+}
+```
+
+Not only do we have two template parameters, but the type of the built object can't be inferred by the parameter.
+
+```C++
+MyObjBuilder builder;
+buildSomething<AnObj> builder;
+```
+
+But this can be simplified using `auto`. Let C++ determine the type of the built object.
+
+```C++
+template<class Builder>
+void makeSomething(BUilder& builder)
+{
+    auto val = builder.makeObj();
+    // ...
+    return;
+}
+```
+
+So, you only need *one* template parameter, and the type is going to be inferred by C++.
+
+```C++
+MyObjBuilder builder;
+makeSomething(builder);
+```
+
+**`decltype`**
+
+Let's suppose in the example above that you want to *return* the object built by the function. Will `auto` help? Yes and no.
+
+There is a new return type syntax.
+
+```C++
+int add(int x, int y);
+auto add(int x, int y) -> int; // the new way!
+```
+
+So, this example is far too simple. Try this:
+
+```C++
+class Student
+{
+private:
+    age m_age;
+public:
+    enum age{OLD, YOUNG};
+    age getAge();
+};
+```
+
+The implementation of `getAge()` is the problem.
+
+```C++
+student::age student::getAge()
+{
+    return m_age;
+}
+```
+
+With `auto`, we can do the following:
+
+```C++
+auto student::getAge()
+{
+    return m_age;
+}
+```
+
+How does this help with the foregoing example? We need something new. While `auto` allows the declaration of a particular type, `decltype` allows you to *extract* a type. 
+
+```C++
+int x = 3;
+decltype(x) y = x;
+```
+
+So, let's apply this to the example.
+
+```C++
+template<class Builder>
+auto makeSomething(Bulider& builder) -> decltype(builder.makeObj())
+{
+    auto val = builder.makeObj();
+    // ...
+    return val;
+}
+```
