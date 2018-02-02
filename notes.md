@@ -601,10 +601,86 @@ So, let's apply this to the example.
 
 ```C++
 template<class Builder>
-auto makeSomething(Bulider& builder) -> decltype(builder.makeObj())
+auto makeSomething(Builder& builder) -> decltype(builder.makeObj())
 {
     auto val = builder.makeObj();
     // ...
     return val;
+}
+```
+
+#### 2 February: Exception Handling
+
+What happens when an object is thrown? Well, two things are thrown:
+
+1. an object
+2. control
+
+```C++
+class RangeErr
+{
+public:
+    RangeErr(int i);
+    int BadSubscript();
+private:
+    int subscr;
+};
+
+class SizeErr
+{
+public:
+    SizeErr(int i);
+    int BadSubscript();
+private:
+    int subscr;
+};
+```
+
+We would want to modify three functions in the `Array` class.
+
+```C++
+template <class T>
+Array<T>::Array(int n)
+{
+    if (n < 0) throw SizeErr(n);
+    m_size = n;
+    ptr_to_data = new T[n];
+}
+
+template <class T>
+T& Array<T>::operator[](int i)
+{
+    if (i < 0 || i >= m_size) throw RangeErr;
+    return ptr_to_data[i];
+}
+
+template <class T>
+void Array<T>::setSize(int n)
+{
+    if (n != m_size)
+        if (n < 0) throw SizeErr(n);
+    // ...
+}
+
+// later
+try
+{
+    int n;
+    cin >> n;
+    Array<float> array(n);
+    // ...
+    int j;
+    cin >> j;
+    float f = array[j];
+}
+
+catch (RangeErr e)
+{
+    cerr << "Subscript out of range: " << e.BadSubscript();
+}
+
+catch (SizeErr e)
+{
+    cout << "Size of declared array is negative: " << e.BadSubscript();
 }
 ```
