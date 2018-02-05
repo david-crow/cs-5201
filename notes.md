@@ -417,7 +417,9 @@ void Array<T>::set_size(const int size)
 }
 ```
 
+***
 #### 31 January: More on Templates
+***
 
 **Templating Functions**
 
@@ -609,7 +611,9 @@ auto makeSomething(Builder& builder) -> decltype(builder.makeObj())
 }
 ```
 
+***
 #### 2 February: Exception Handling
+***
 
 What happens when an object is thrown? Well, two things are thrown:
 
@@ -684,3 +688,95 @@ catch (SizeErr e)
     cout << "Size of declared array is negative: " << e.BadSubscript();
 }
 ```
+
+***
+#### 5 February: Function Overloading, Templates, and Member Functions
+***
+
+```C++
+float index_of_min(const Array<float>& a)
+{
+    // ...
+    return index_of_min_element;
+}
+
+float& min_element(Array<float>& a)
+{
+    // ...
+    return a[index_of_min(a)];
+}
+```
+
+This return by reference, though legal and preferred in some cases, can lead to heartbreak. This is because that reference creates a backdoor into the class. Consider returning a non-referenced value (like a `const`).
+
+**Function Overloading and Templates**
+
+You overload a function when you want to have multiple functions with the same name but different parameter lists. This is different from templating where you want the exact same functionality but for different types.
+
+**Overloading Functions and How C++ Resolves Function Calls**
+
+There are levels of consideration that C++ will go through to know how to resolve a function call.
+
+1. Consider an exact match with only the possibility of trivial conversions
+    - Trivial: `T` to `T&`
+    - Trivial: `T` and `T&` to `T*`
+2. Match with promotion
+    - From `char`, `enum`, or `short` to `int` or `long`
+        - Example: `void bob(float);` and `void bob(int);` can coexist
+3. Standard conversions
+    - `int`-types to `float`-types
+4. User-defined conversions
+
+**Templates**
+
+Suppose we have the following:
+
+```C++
+template <class T>
+void bob(T a, T& b);
+
+// members of the class include:
+void bob(int a, const int& b);
+void bob(char a, const char& b);
+
+// but don't include
+// void bob(int a, const float& b);
+```
+
+The steps C++ follows to resolve function calls:
+
+1. Match without the possibility of any conversion
+2. Template match with the possibility of trivial conversion
+3. Function delcaration using the ordinary matching process
+
+```C++
+template <class T>
+int compare(const T& t1, const T& t2)
+{
+    if (t1 < t2) return -1;
+    if (t1 > t2) return 1;
+    return 0;
+}
+
+template <> // specialization
+int compare<const char*>(const char* const& s1, const char* const& s2)
+{
+    return strcmp(s1, s2);
+}
+```
+
+**Member Functions**
+
+One difference between member and non-member functions is that member functions can be `const` functions. A `const` function is a member function that can *not* alter the calling object. If you want to overload `operator[]`, make two versions: a `const` version and a non-`const` version.
+
+**Special People**
+
+Constructors
+- No return type
+- No return statement
+- Named name of class
+- C++ will provide a default constructor, but it's suppressed when any custom constructor is created.
+
+***
+#### 7 February: 
+***
