@@ -718,14 +718,21 @@ You overload a function when you want to have multiple functions with the same n
 There are levels of consideration that C++ will go through to know how to resolve a function call.
 
 1. Consider an exact match with only the possibility of trivial conversions
-    - Trivial: `T` to `T&`
-    - Trivial: `T` and `T&` to `T*`
+    - Trivial: `T` to/from `T&`
+    - Trivial: `T` to/from `T*`
+    - `void f(T&)` and `void f(T)` can't coexist.
+    - Note that `void f(T)` and `void f(const T)` can coexist.
 2. Match with promotion
     - From `char`, `enum`, or `short` to `int` or `long`
-        - Example: `void bob(float);` and `void bob(int);` can coexist
+        - Example: `void bob(float)` and `void bob(int)` can coexist
 3. Standard conversions
     - `int`-types to `float`-types
 4. User-defined conversions
+    - Be sure that your code only defines one way to convert one type to another.
+        ```C++
+        void bob(int, float);
+        void bob(int, double);
+        // bob(1, 2); // C++ throws an error for ambiguous function call
 
 **Templates**
 
@@ -741,6 +748,17 @@ void bob(char a, const char& b);
 
 // but don't include
 // void bob(int a, const float& b);
+
+int a;
+float b;
+
+bob(1, a); // matches the template with T = int
+bob(1.0, b); // matches the template with T = float
+// bob(1, b); // no match
+
+void bob(float a, const float& b);
+bob(1, b); // match with promotion
+
 ```
 
 The steps C++ follows to resolve function calls:
@@ -778,5 +796,86 @@ Constructors
 - C++ will provide a default constructor, but it's suppressed when any custom constructor is created.
 
 ***
-#### 7 February: 
+#### 7 February: Constructors and Operators
 ***
+
+We can define constructors in a .cpp, inline, or with an initialization list.
+
+```C++
+class point
+{
+public:
+    point(float x, float y) : m_x(x), m_y(y) {}
+
+private:
+    float m_x;
+    float m_y;
+};
+
+// --- point.cpp
+
+/* point::point(float x, float y)
+{
+    m_x = x;
+    m_y = y;
+} */
+```
+
+You initialize if:
+1. you have a no default constructor
+2. you have a member variable that is a constant
+3. you have a member variable that is a constant reference
+
+You don't have to initialize if:
+1. members are C++ primitives
+2. you have a user defined default constructor
+3. you have no user defined other constructor
+
+**Copy Constructors**
+
+- `A::A(const A& rhs);`
+- Copy constructors are called:
+    - explictly
+    - pass-by-value parameters in functions
+    - return-by-value from functions
+    - when an exception is thrown
+- C++ provides an automatic copy constructor, but it will copy member-by-member even if they are pointers. This leads to shallow copies.
+- Remember: if your class contains a pointer (referential aggregation), then you should write your own:
+    - copy constructor
+    - copy assignment
+    - destructor
+
+**Operators (AKA Functions for Special Symbols)**
+
+- You can't change the functionality of an operator for primitives.
+- You can't change the arity of an operator.
+- You can't change the order of precedences.
+- You can't overload `::`, `:`, `.*`, `sizeof`, or `?:`.
+
+**General Rules**
+
+- Make your operators make sense
+- Define pairs when appropriate
+
+```C++
+// complex numbers
+complex& complex::operator+=(const complex& rhs)
+{
+    m_real += rhs.m_real;
+    m_imaginary += rhs.m_imaginary;
+
+    return *this;
+}
+
+complex operator+(const operator& rhs, const complex& rhs)
+{
+    complex result(lhs);
+    return result += rhs;
+}
+
+complex w, z;
+w += z;
+w += z += w;
+```
+
+`operator[]`, `operator()`, and `operator=` have to be implemented as member functions.
