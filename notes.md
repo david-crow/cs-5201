@@ -1,4 +1,4 @@
-## CS 5201: Object-Oriented Numerical Modeling I
+## CS 5201: Object-Oriented Numerical Modeling
 
 ***
 #### 17 January: Introduction
@@ -733,6 +733,7 @@ There are levels of consideration that C++ will go through to know how to resolv
         void bob(int, float);
         void bob(int, double);
         // bob(1, 2); // C++ throws an error for ambiguous function call
+        ```
 
 **Templates**
 
@@ -879,3 +880,102 @@ w += z += w;
 ```
 
 `operator[]`, `operator()`, and `operator=` have to be implemented as member functions.
+
+***
+#### 9 February: Function Wrappers, Friend Functions, Static Functions, and Conversions
+***
+
+`operator()` - use as a function or as a function class. Effectively, you wrap up a function in a class.
+
+```C++
+class bell_curve
+{
+private:
+    float m_h;
+    float m_w;
+
+public:
+    bell_curve(const float h = 1, const float w = 1): m_h(h), m_w(w) {}
+    float operator()(float x) { return m_h / (m_w + x * x); }
+};
+
+// later...
+bell_curve y(1, 1);
+// ...
+cout << y(2) << endl; // 0.2
+```
+
+**Friend Functions**
+
+A function is a friend of a class means that it is a non-member and that it has been given direct access rights to the private section of that class.
+    - Don't trust your friends.
+    - Avoid friends.
+
+Note: the only place that `friend` should ever appear is inside a class.
+
+The functions that (almost) everyone makes a non-member `friend` are the streaming operators.
+
+**Static Functions**
+
+```C++
+class complex
+{
+public:
+    complex(floar re, float im): m_re(re), m_im(im) {}
+    static complex file_read(istream& in = cin);
+};
+
+complex complex::file_read(istream& in = cin)
+{
+    float r, i;
+    in >> r >> i;
+    return complex(r, i);
+}
+
+complex z = complex::file_read(input); // where input is a stream
+// z.file_read(...) does not work because it's not a member function 
+
+struct stooge
+{
+    static void moe();
+    static void larry();
+    static void curly();
+};
+
+stooge::curly();
+```
+
+**Conversions**
+
+If your class has a constructor that takes a single variable of some type and builds an object (of course), then it can be thought of as a *constructor for automatic conversion*.
+
+```C++
+complex(float r = 1, float i = 0): m_r(r), m_i(i) {}
+
+// non-member function
+complex operator+(const complex& lhs, const complex& rhs);
+
+// later...
+z = u + r;
+z = u + 4; // 4 gets sent to the constructor and becomes a complex because we gave the constructor default values
+// this also wouldn't work if operator+ were a member function
+```
+
+There are functions for automatic conversions. These are called *conversion functions*.
+
+```C++
+class complex
+{
+private:
+    float m_r, m_i;
+
+public:
+    // ...
+    operator bool() { return m_r || m_i; }
+};
+
+complex z;
+
+if (z)
+    // do stuff
+```
