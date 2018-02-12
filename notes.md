@@ -979,3 +979,69 @@ complex z;
 if (z)
     // do stuff
 ```
+
+***
+#### 12 February: Object Lifetime
+***
+
+**The Object Lifecycle**
+
+1. Allocation - memory is allocated by the operating system as triggered by your code
+2. Pre-initialization - overhead of making the memory a C++ object, naming it, connecting it to your program
+3. Initialization - constructors are run
+4. Use - its use in your program
+5. Cleanup - reverse of initialization
+6. Post-cleanup and deallocation - memory is restored to the free store
+
+There are threee types of objects in C++:
+
+1. Automatic - allocated when the code requests that allocation and destroyed when out of scope
+2. Static variables - allocated if code runs and they persist until the end of the program
+3. Dynamic - allocated and destroyed depending on how the program runs
+
+```C++
+class Trace
+{
+public:
+    Trace(const char* name); // create and print messages
+    ~Trace();
+
+private:
+    enum {max = 100}; // max number of objects to create
+    static char existing_objects[max + 1]; // L - live; D - dead
+    static int total_created;
+    int instance;
+    char var_name[21];
+};
+
+int Trace::total_created = 0;
+char Trace::existing_objects[max + 1] = "";
+
+Trace::Trace(const char* name):instance(total_created++)
+{
+    strncpy(var_name, name, 20);
+    var_name[20] = '\0';
+
+    if (total_created <= max)
+    {
+        existing_objects[total_created - 1] = 'L';
+        existing_objects[total_created] = '\0';
+        cout << existing_objects << " trace created for " << var_name << endl;
+    }
+}
+
+Trace::~Trace()
+{
+    if (instance < max)
+    {
+        existing_objects[instance] = 'D';
+        cout << existing_objects << " trace destroyed for " << var_name << endl;
+    }
+}
+```
+
+**Static Variables**
+
+Static variables can give state to a function. Static variables persist to the end of the program, which destroys them kn the reverse order in which they were created. 
+
+Local static variables are created first.
