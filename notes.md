@@ -1045,3 +1045,101 @@ Trace::~Trace()
 Static variables can give state to a function. Static variables persist to the end of the program, which destroys them kn the reverse order in which they were created. 
 
 Local static variables are created first.
+
+***
+#### 14 February: Dynamic Memory and Interpolating Polynomials
+***
+
+- Objects are allocated by a call to `new` and deallocated by a call to `delete`.
+- Objects are created as the program needs them.
+- So, there needs be no releationship between dynamic memory and variables - known at compile time.
+- `new` will invoke the appropriate constructor
+- new arrays of objects require a default constructor
+- upside of dynamic memory: flexibility
+- downside of dynamic memory: memory management
+
+Construction: `int * p = new int; // new takes a type as an argument`
+Or: `int * p = new int[size]; // dynamic array`
+
+Destruction: always match a call to `new` with an appropriate call to `delete`; match them one-to-one
+
+Bad deletions lead to *big* problems.
+1. Dangling pointers (shallow copies): copying a pointer instead of what it points to - when you `delete` both, you have a *double delete*
+    - Fix: write your own copy constructor and assignment operator
+
+    ```C++
+    class Bad
+    {
+    public:
+        bad() { p = new int(0); }
+        ~bad(){ delete p; }
+        int * p;
+    };
+
+    void f()
+    {
+        bad a;
+        bad b = a;
+        // ...
+    }
+
+    // later
+    class good
+    {
+    public:
+        good() { p = new int(0); }
+        ~good() { delete p; }
+        good(const good& g): p(new int(*s.p)) {}
+        good& operator=(const good& g)
+        {
+            if (g.p != p)
+            {
+                delete p;
+                p = new int(*g.p);
+            }
+
+            return *this;
+        }
+
+        int * p;
+    }
+    ```
+
+2. Dangling pointers: set a pointer to an automatic object; when the object goes out of scope, the pointer points to nothing.
+    - Fix: don't point to automatic objects.
+
+3. Deleting a function parameter: suppose you pass a pointer to a function and `delete` it there. In the calling function, the pointer is useless.
+    - Fix: don't do this - don't `delete` function parameters
+
+4. Garbage: not deleting an object; the memory is lost
+    - Fix: put pointers into class-type-sorta-thingies called smart pointers
+
+**Interpolating Polynomials**
+
+Fit a curve to the existing data to be able to explain it in some way. Additionally, this allows you to identify values at points not reflected in the data itself.
+
+If you trust the data (i.e. you want your curve to exactly hit each point), use an interpolating polynomial. Polynomials are nice because you can easily calculate values.
+
+There are two forms of creating an interpolating polynomial:
+- Lagrange form
+- Newton form
+
+**Newton Form**
+
+`P_N(x) = a0 + a1(x-x0)+a2(x-x1)(x-x0) + ... + a_N(x - xN)*...*(x-x0)` where `ak = f[x0, x1, x2, ..., xk], k = 0, 1, ..., N`
+
+```
+f[]:
+    f[xk] = f(xk) = yk
+    f[xk-1, xk] = (f[xk] - f[xk-1]) / (xk - xk-1)
+    f[xk-2, xk-1, xk] = (f[xk-1, xk] - f[xk-2, xk-1]) / (xk - xk-2)
+    f[xk-j, xk-j+1, ..., xk] = (f[xk-j+1, xk] - f[xk-j, xk-1]) / (xk - xk-j)
+```
+
+The table:
+| xk | yk = f[xk] | f[ , ] | f[ , , ] | f [ , , , ]
+| - | - | - | - | - |
+| x0 | y0 | - | - | - |
+| x1 | y1 | f[x0, x1] | - | - |
+| x2 | y2 | f[x1, x2] | f[x0, x1, x2] | - |
+| x3 | y3 | f[x2, x3] | f[x1, x2, x3] | f[x0, x1, x2, x3] |
