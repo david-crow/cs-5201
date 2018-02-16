@@ -1143,3 +1143,144 @@ The table:
 | x1 | y1 | f[x0, x1] | - | - |
 | x2 | y2 | f[x1, x2] | f[x0, x1, x2] | - |
 | x3 | y3 | f[x2, x3] | f[x1, x2, x3] | f[x0, x1, x2, x3] |
+
+***
+#### 16 February: Move
+***
+
+One of the most important goals in programming is to make it fast. There are many forces in our world working against that effort. One *big* one is the generation of objects - in particular, temporary objects that just end up discarded anyway.
+
+```C++
+class Array;
+
+Array squares(const Array& a)
+{
+    int n = a.get_size();
+    Array square_array(n);
+    for (int i = 0; i < n; i++)
+        square_array[i] = a[i] * a[i];
+}
+
+int main()
+{
+    // ...
+    Array stuff(10000);
+    stuff = squares(stuff);
+}
+```
+
+What's the problem? Copies! There are too many copies of arrays. Can we avoid all of the copying? Yes! The temporary objects just get discarded. In the past (pre-C++11), we had no way to identify temporary objects. We do now.
+
+**rvalues vs lvalues**
+
+An lvalue (formerly left-hand value) is an expression with a locatable memory... a "locator value." It has some *permanent* piece of memory - a name.
+
+```C++
+short x; // x is an lvalue
+x = 10;
+```
+
+```C++
+int x;
+int& get_x() { return x; }
+get_x() = 10;
+```
+
+So, an lvalue need not be a variable.
+
+An rvalue is *not* an lvalue. An expression that is a temporrary object.
+
+```C++
+int x;
+int get_x() { return x; }
+get_x(); // this is a temporary object
+x = get_x(); // assigning from a temporary object
+```
+
+Can we identify temporary objects? In pre-C++11, no, we couldn't. An *rvalue reference* is a reference that will only bind to a temporary object.
+
+```C++
+// before C++11
+const int& z = get_x(); // okay
+// int& z = get_x(); // not okay
+```
+
+You can't have a mutable reference to a temporary object.
+
+C++11 introduces the rvalue reference that will bind to an rvalue and *not* an lvalue.
+
+```C++
+// with C++11 and beyond
+const int&& z = get_x(); // okay
+int&& z = get_x(); // also okay
+```
+
+So, an rvalue reference can detect a temporary object.
+Consider the following two functions:
+
+```C++
+void printref(const string& s) { cout << s; } // function 1
+void printref(string&& s) { court << s; } // function 2
+```
+
+Function 1 will accept any - mutable or not - lvalue or rvalue. However, if Function 2 is present, then Function 1 will accept all *but* mutable rvalue references.
+
+**Move Constructors**
+
+Like a copy constructor, a move constructor builds a new object. Rather than create new memory, though, it will *move* the object. It can because it knows the argument is a temporary object - an rvalue reference. If the argument is a primitive, move is just a copy. However, if the object to copy is/has a pointer, it will just steal the pointer and then nullify the pointer to the old object. This works because the old object is about to go away.
+
+```C++
+// for array
+class Array
+{
+public:
+    // ...
+    Array(Array&& other): ptr_to_data(other.ptr_to_data), size(other.size)
+    {
+        other.ptr_to_data = nullptr;
+        other.size = 0;
+    }
+};
+```
+
+We set the `other`'s pointer to `null` because it's a temporary object about to be released from The Old ArrayFolks Home."
+
+Now, suppose that the class you are writing the move constructor for contains an object. How will it be handled?
+
+Suppose we have the following:
+
+```C++
+class data
+{
+    int size;
+    string name;
+
+public:
+    data(const int s, const string& n): size(s), name(n) {}
+    data(const data& other): size(other.size), name(other.name) {}
+    data(data&& other): size(other.size), name(other.name) {}
+};
+
+class Array
+{
+    float* ptr_to_data;
+    data size_n_name;
+
+public:
+    // ...
+}
+```
+
+Will this work? Does it work for `Array`'s move constructor to call `data`'s move constructor? Nope.
+
+We must `#include <utility>` for `std::move`.
+
+```C++
+Array(Array&& other): ptr_to_data(other.ptr_to_data),
+    data(std::move(other.data))
+{
+    other.ptr_to_data = nullptr;
+}
+```
+
+We have to do the same thing for `data`'s move constructor. The reason: the `other` in `Array`'s move constructor is an rvalue reference. However, an rvalue reference is not an rvalue; it's an lvalue. This means we have to change it. The `std::move` casts that lvalue to an rvalue reference.
