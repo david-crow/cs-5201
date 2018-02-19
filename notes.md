@@ -1126,7 +1126,7 @@ There are two forms of creating an interpolating polynomial:
 
 **Newton Form**
 
-`P_N(x) = a0 + a1(x-x0)+a2(x-x1)(x-x0) + ... + a_N(x - xN)*...*(x-x0)` where `ak = f[x0, x1, x2, ..., xk], k = 0, 1, ..., N`
+`P_N(x) = a0 + a1(x-x0) + a2(x-x1)(x-x0) + ... + a_N(x - xN)*...*(x-x0)` where `ak = f[x0, x1, x2, ..., xk], k = 0, 1, ..., N`
 
 ```
 f[]:
@@ -1284,3 +1284,57 @@ Array(Array&& other): ptr_to_data(other.ptr_to_data),
 ```
 
 We have to do the same thing for `data`'s move constructor. The reason: the `other` in `Array`'s move constructor is an rvalue reference. However, an rvalue reference is not an rvalue; it's an lvalue. This means we have to change it. The `std::move` casts that lvalue to an rvalue reference.
+
+***
+19 February: The Copy/Swap Maneuver
+***
+
+...for the overload of the assignment operator.
+
+In our `Array` class, we had an overload of the assignment operator that was as follows:
+
+```C++
+Array& Array::operator=(const Array& s)
+{
+    if (ptr_to_data != s.ptr_to_data)
+    {
+        set_size(s.m_size);
+        for (int i = 0; i < m_size; i++)
+            ptr_to_data[i] = s.ptr_to_data[i];
+    }
+
+    return *this;
+}
+```
+
+Can we do better? Problems with that code:
+
+1. To make allowance for self-assignment (how often does this really happen?)
+2. Time spent walking down the array (10 elements vs 10 billion elements)
+
+Answer:
+
+```C++
+Answer& Array::operator=(Array s)
+{
+    swap(*this, s);
+    return *this;
+}
+```
+
+Most important thing is that you understand the swap used here. You need to write your own swap function.
+
+```C++
+class Array
+{
+public:
+    // ...
+    friend void swap(Array& a1, Array& a2)
+    {
+        std::swap(a1.m_size, a2.m_size);
+        std::swap(a1.ptr_to_data, a2.ptr_to_data);
+    }
+}
+```
+
+We can't use the `std::swap` to swap the arrays because it uses the copy constructor and the assignment operator, that which we are trying to overload. So, in our new version of `operator=`, we use pass-by-value, letting the compiler make the copy for us (using our copy constructor). If it fails, then `*this` is not affected. Additionally, when the copy is made, we just steal the pointer, as we did with a move constructor. The passed object goes out of scope and we have the goods.
