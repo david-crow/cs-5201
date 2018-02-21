@@ -847,7 +847,7 @@ You don't have to initialize if:
     - destructor
 
 **Operators (AKA Functions for Special Symbols)**
-
+o
 - You can't change the functionality of an operator for primitives.
 - You can't change the arity of an operator.
 - You can't change the order of precedences.
@@ -1338,3 +1338,145 @@ public:
 ```
 
 We can't use the `std::swap` to swap the arrays because it uses the copy constructor and the assignment operator, that which we are trying to overload. So, in our new version of `operator=`, we use pass-by-value, letting the compiler make the copy for us (using our copy constructor). If it fails, then `*this` is not affected. Additionally, when the copy is made, we just steal the pointer, as we did with a move constructor. The passed object goes out of scope and we have the goods.
+
+***
+#### 21 February: Smart Pointers
+***
+
+We all know that pointers are necessary to programming in C++, but the built-in pointers are too weak and too strong: they allow the programmer too much power with too little oversight.
+
+**Aggregation**
+
+...is the combining of different objects into another object, and when your class *contains* a pointer, you have *referential* aggregation. The problem is that the life of the program - and what it points to - don't necessarily coincide. So, when objects get copied (especially by built-in copy constructors), then the possibility of a shallow copy exists. Leaks can be caused in many ways, including ways you hadn't thought of... yet. Additionally, they can happen when you think you have all of your bases covered - a user-defined copy constructor and assignment operator. Programmer-defined objects that wrap up pointers are called *smart pointers*, and they're designed do what they're supposed to do and clean up after themselves. We write smart pointers to preserve a one-to-one relationship between the pointer and what it points to.
+
+```C++
+template <class T>
+class CBPtr // copied built-in pointer
+{
+protected:
+    T* the_p;
+
+public:
+    CBPtr(): the_p(nullptr) {} // default pointer
+    CBPtr(T* just_newed): the_p(just_newed) {} // from a new pointer
+    ~CBPtr() { delete the_p; }
+    CBPtr(const CBPtr<T>& aCP): the_p(aCP.is_null() ? nullptr : new T(*aCP.the_p)) {}
+
+    CBPtr<T>& operator=(T* p)
+    {
+        delete the_p;
+        the_p = p;
+        return *this;
+    }
+
+    CBPtr<T>& operator=(const CBPtr<T>& rhs)
+    {
+        if (the_p != rhs.the_p)
+        {
+            delete the_p;
+            the_p = rhs.is_null ? nullptr : new T(*rhs.the_p);
+        }
+
+        return *this;
+    }
+
+    T& operator*() const { return *the_p; }
+    bool is_null() const { return the_p == 0; }
+
+    T* release_control()
+    {
+        T* save_p = the_p;
+        the_p = nullptr;
+        return save_p;
+    }
+
+    friend bool operator==(const CBPtr<T>& lhs, const CBPtr<T>& rhs)
+    {
+        return lhs.the_p == rhs.the_p;
+    }
+
+    friend bool operator!=(const CBPtr<T>& lhs, const CBPtr<T>& rhs)
+    {
+        return !(lhs == rhs);
+    }
+};
+```
+
+**Benefits**
+
+1. One-to-one relationship between pointer and heap object
+2. Automatic copy is made when C++ auto generated copy constructor is called since the copy constructor for `CBPtr` is called
+3. `delete` the pointer `delete`s the heap object --> no garbage
+4. Has an `is_null` function
+5. Has comparison operators
+
+```C++
+template <class T>
+class COPtr : public CBPtr<T> // copy object pointer
+{
+public:
+    COPtr(const COPtr<T>& p): CBPtr<T>(p) {}
+    COPtr(): CBPtr<T>() {}
+    COPtr(T* just_newed): CBPtr<T>(just_newed) {}
+    // a destructor
+
+    COPtr<T>& operator=(T* rhs)
+    {
+        CBPtr<T>::operator=(rhs);
+        return *this;
+    }
+
+    COPtr<T>& operator=(const COPtr<T>& rhs)
+    {
+        CBPtr<T>::operator=(rhs);
+        return *this;
+    }
+
+    T* operator->() const { return the_p; }
+};
+```
+
+**Note**
+
+The `CBPtr` class is for built-in types. It doesn't - and should not - have an overload of `operator->`. This operator should return either a built-in pointer to a class object or an object of a pointer-like class with an overload of `operator->`. Built-in pointers to built-in objects cannot be returned.
+
+```C++
+class Leaker
+{
+public:
+    Leaker(const int size): p(new float(0)), array(size) {}
+    Leaker(const Leaker& rhs): p(new float(*rhs.p)) {}
+    ~Leaker() { delete p; }
+
+    Leaker& operator=(const Leaker& rhs)
+    {
+        p = new float(*rhs.p);
+        array = rhs.array;
+        return *this;
+    }
+
+private:
+    float* p;
+    Array<int> array;
+};
+
+void f()
+{
+    Leaker l(-1);
+    // ...
+}
+```
+
+When `f()` is called, the constructor for `Leaker` is called. The `float` is allocated and we try to construct `array` with a negative size. An exception is thrown. When an exception is thrown, all *fully-constructed* objects are destroyed -- we have a leak!
+
+```C++
+class nonLeaker
+{
+public:
+    nonLeaker(const int size): p(new float(0)), array(size) {}
+
+private:
+    CBPtr<float> p;
+    Array<int> array;
+};
+```
