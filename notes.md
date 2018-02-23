@@ -1480,3 +1480,125 @@ private:
     Array<int> array;
 };
 ```
+
+***
+#### 23 February: A Review of Vector Analysis
+****
+
+**Definition:** A vector space is a set of vectors and scalars along with the operations `+` and `·` that adhere to the following:
+
+1. A vector space `V` is closed under vector addition `+` and
+    1. `α + β = β + α`, for all `α`, `β` in `V`
+    2. `(α + β) + γ = α + (β + γ)`, for all `α`, `β`, `γ` in `V`
+    3. For all `0` in `V` (zero vector), `α + 0 = α`, for all `α` in `V`
+    4. For all `α` in `V`, there exists some `β` in `V` such that `α + β = 0`
+        - the negative of `α` is `β`
+2. `V` is closed under scalar multiplication (if `α` in `V` and `c` is a scalar)
+    1. `c · (α + β) = c · α + c · β`, for all `α`, `β` in `V`, and `c · α` in `V`
+    2. `(c + d) · α = c · α + d · α`
+    3. `(c * d) · α = c · (d · α)`
+    4. `1 · α = α`
+
+**Example**
+
+1. Let `V` be the set of all pairs of real numbers (`R^2`) and the scalars, the real numbers (`R`), and let `+` be defined as the sum of two vectors is: the vector whose components are the usual sum of the operands and scalar multiplication is the usual multiplication. This is a vector space.
+2. `V` is the set of all continuous functions on `[0, 1]`. This is a vector space.
+3. Let `V` be the set of all matrices `A_{mn}` of real entries... this is a vector space.
+4. Let `V = Z^+`, scalars are reals. This is not a vector space.
+
+**Subspaces**
+
+A subset of vectors `v` in `V` is a subspace if that subset is closed under `+` and `·`.
+
+**Definition:** A linear combination is any sum of constant (scalar) multiples of vectors in the vector space.
+
+**Defintion:** Let `S = {α_1, ..., α_n}` be a subset of `V`. If any `v` in `V` is some linear combination of the vectors in `S`, then `S` is said to span `V`. `S` is a *spanning set*.
+
+**Definition:** A set `S = {α_1, ..., α_n}` be a subset of `V`. `S` is said to be linearly dependent if there exists `a_i`, `1 <= i <= n`, not all `0`, such that `a_1 * α_1 + a_2 * α_2 + ... + a_n * α_n = 0`.
+
+If, given `a_1 * α_1 + a_2 * α_2 + ... + a_n * α_n = 0`, the solution is `a_1 = a_2 = ... = a_n = 0`, then `S` is said to be linearly independent.
+
+**Definition:** If a set `S = {α_1, ..., α_n}` spans the vector space `V` and is linearly independent, it is called a basis.
+
+In 3D space, `i-hat, j-hat, k-hat` (the unit vectors) form a basis. For example, `v = <2, 7, -3> = 2i + 7j -3k`.
+
+**Definition:** The dimension of a vector space `V` (`dim V`) is the number of vectors in a linearly independent spanning set of `V`.
+
+***
+#### 26 January: Inner Product Spaces
+***
+
+**Definition**
+
+An inner product on a vector space `V` is a real-valued function over `V` with the following rules:
+
+1. `(α, α) > 0`, for all `α` in `V`
+2. `(α, β) = (β, α)`, for all `α, β` in `V`
+3. `(α + β, γ) = (α, γ) + (β, γ)`
+4. `(cα, β) = c(α, β)`, where `c` is a scalar
+
+**Theorem:** Cauchy-Schwarz Inequality
+
+For any `α, β` in `V`, `(α, β)^2 <= |α|^2 * |β|^2`, where `|α| = √[(α, α)]`.
+
+**Proof**
+
+If `α = 0`, then `(α, β) = 0` and the inequality holds. Suppose `α != 0`, and let `r = 0` be in `R`, and we consider `0 <= (rα + β, rα + β) = r^2 (α, α) + 2r(α, β) + (β, β) = ar^2 + 2br + c`, where `a = (α, α)`, `b = (α, β)`, and `c = (β, β)`.
+
+Well, `ar^2 + 2br + c` is a quadratic in `R` that is non-negative. This implies that `4b^2 - 4ac <= 0`, so `b^2 - ac <= 0`, so `b^2 <= ac`, so `(α, β)^2 <= |α|^2 * |β|^2`.
+
+**Theorem:** The Triangle Inequality
+
+For any `α` and `β` in `V`, `|α + β| <= |α| + |β|`.
+
+**Proof**
+
+`|α + β|^2 = (α + β, α + β) = (α, α) + (β, α) + (α, β) + (β, β) = |α|^2 + 2(α, β) + |β|^2 <= |α|^2 + 2|α| * |β| + |β|^2 = (|α| + |β|)^2`.
+
+Thus, `|α + β| <= |α| + |β|`.
+
+**Definition**
+
+Let `V` be an inner product space. Then we say that `α, β` in `V` are orthogonal if `(α, β) = 0`.
+
+**Example**
+
+In `R^4` (`n <= 3`), the *dot product* is an inner product. The cross product is *not* an inner product.
+
+Recall: we all agree that a basis is best when it is *orthonormal* (the basis vectors are of length `1` and all are mutually orthogonal).
+
+Question: if we have an arbitrary basis for `V`, can we create from it an orthonormal (even orthogonal) basis? The technique is called the *Gram-Schmidt* method.
+
+**Gram-Schmidt Method**
+
+Suppose `T = {α_1, α_2, ..., α_n}` is a basis for a vector space. We wish to generate a set of vectors `{β_1, β_2, ..., β_n}` that is an orthogonal basis from this basis, `T`.
+
+Let `β_1 = α_1`. Now, find `β_2` so that `β_1` is orthogonal to `β_2` and the set `{β_1, β_2}` spans the same subspace as {`α_1, α_2}` or `{β_1, α_2}`. We have `β_2 = a_1 * α_1 + a_2 * α_2 = a_1 * β_1 + a_2 * α_2`. We want `(β_1, β_2) = 0 = (β_1, a_1 * β_1 + a_2 * α_2) = a_1 * (β_1, β_1) + a_2 * (α_2, β_1)`. Let `a_2 = 1`. Solve for `a_1`.
+
+`a_1 = - a_2 * (α_2, β_1) / (β_1, β_1)`
+
+Thus, `β_2 = α_2 - a_2 * (α_2, β_1) / (β_1, β_1) * β_1`.
+
+Next, we want to find `β_3` so that `{β_1, β_2, β_3}` spans the same subspace as `{α_1, α_2, α_3}` or `{β_1, β_2, α_3}` and they're all orthogonal to each other.
+
+Let `β_3 = b_1 * β_1 + b_2 * β_2 + b_3 * β_3`.
+
+We want `(β_1, β_3) = 0 = b_1 * (β_3, β_1) + b_2 * (β_1, β_2) + b_3 * (β_1, α_3)`
+
+`(β_2, β_3) = 0 = b_1 * (β_2, β_1) + b_2 * (β_2, β_2) + b_3 * (β_2, α_3)`
+
+Let `b_3 = 1`.
+
+`b_1 = - (β_1, α_3) / (β_1, β_2)`
+
+`b_2 = - (β_2, α_3) / (β_2, β_2)`
+
+So, `β_3 = α_3 - (β_1, α_3) / (β_1, β_1) - β_2 * (β_2, α_3) / (β_2, β_2)`.
+
+Thus, `b_k = α_k - ∑_{n=1, k-1} β_n * (β_n, α_k) / (β_n, β_n)`, where `k = 1, ..., n`.
+
+An orthonormal basis is obtained by dividing all vectors by their own magnitudes.
+
+If `s = {α_1, ..., α_n}` is an orthonormal basis for the vector space and `v` in `V` is any vector in the vector space, then there are some constants such that `v = a_1 * α_1 + a_2 * α_2 + ... + a_n * α_n`. Finding the multipliers (the coefficients) is a cake walk.
+
+`(α_1, v) = (α_1, a_1 * α_1) + (α_1, a_2 * α_2) + ...`, so `a_1 = (α_1, v) / 1`.
