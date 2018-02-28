@@ -1602,3 +1602,58 @@ An orthonormal basis is obtained by dividing all vectors by their own magnitudes
 If `s = {α_1, ..., α_n}` is an orthonormal basis for the vector space and `v` in `V` is any vector in the vector space, then there are some constants such that `v = a_1 * α_1 + a_2 * α_2 + ... + a_n * α_n`. Finding the multipliers (the coefficients) is a cake walk.
 
 `(α_1, v) = (α_1, a_1 * α_1) + (α_1, a_2 * α_2) + ...`, so `a_1 = (α_1, v) / 1`.
+
+***
+#### 2 March: Vector and Matrix Norms
+***
+
+A norm is a way to measure, but we demand certain properties:
+
+**Definition:** Suppose `V` is a vector space. Then, `N: V → R` is a norm if:
+
+1. `N(v) >= 0` for all `v` in `V`; `N(v) = 0` if and only if `v = 0`
+2. `N(α * v) = |α| * N(v)`, for all `v` in `V` and for all `α` in `R`
+3. `N(v + w) <= N(v) + N(w)`, for all `v` and `w` in `V`
+
+**p-norms**
+
+`||v||_p = [∑_{n} |x_i|^p]^(1/p)`, with `v = <x_1, x_2, ..., x_n>`
+
+`p = 1`: `||v||_1 = ∑_{i = 1, n} |x_i|`
+`p = 2`: `||v||_2 = sqrt(∑_{i = 1, n} |x_i|^2)`
+`p = ∞`: `||v||_∞ = max_i |x_i|`
+
+Given `v = <4, 0, -2, 1>`,
+- `1`-norm = `7`
+- `2`-norm = `sqrt(21)`
+- `∞`-norm = `4`
+
+**Theorem:** Equivalence of Norms
+
+Let `N` and `M` be norms on `R^n`. Then, there exist constants `c_1 > 0` and `c_2 > 0` such that `c_1 * M(x) <= N(x) <= c_2 * M(x)`, for all `x` in `V`, where `V = R^n`.
+
+**Lemma:** Continuity of Norms
+
+Let `M(x)` be a norm on `R^n`. Then, `M(x)` is a continuous function of the `x_i` for all `x` in `R^n`, where `(x = <x_1, x_2, ..., x_n>)`
+
+**Proof:** Show that, if `x_i ≈ y_i`, then `N(x) ≈ N(y)`.
+
+We have `(x - y) = ∑_{i = 1, n} (x_i - y_i) * e_i`. So, `N(x - y) = ||x - y|| <= ∑_{i = 1, n} |x_i - y_i| * N(e_i) <= ∑_{i = 1, n} max_i |x_i - y_i| * N(e_i) = ||x - y||_∞ * ∑_{i = 1, n} N(e_i)`
+
+Now, using the Reverse Triangle Inequality, `|N(x) - N(y)| <= N(x - y) <= ||x - y||_∞ * c`, where `c = ∑_{i} N(e_i)`. Equivalently, `|N(x) - N(y) <= c * ||x - y||_∞`
+
+**Proof:** Equivalence of Norms
+
+It is sufficient to show for an arbitrary norm `N` and a specific norm, `||...||_∞`. Thus show that, for each of `c_1, c_2 > 0`, `c_1 * ||x||_∞ <= N(x) <= c_2 * ||x||_∞`.
+
+From the lemma, if we set `y = 0`, we have `|N(x) - N(y)| <= c_2 * ||x - y||_∞`, so `N(x) = |N(x)| <= c_2 * ||x||_∞`, and `N(x) <= c_2 * ||x||_∞`.
+
+So, the upper inequality holds. The lower inequality holds because all norms are bounded away from `0`.
+
+`c_1 * ||x||_∞ <= N(x) <= c_2 * ||x||_∞`.
+
+Because of this, we know there are two more constants, `c_3` and `c_4` which show `c_3 * ||x||_∞ <= M(x) <= c_4 * ||x||_∞`
+
+Why is this important? What does this theorem give us?
+
+When you judge whether a set sequence of vectors diverges or converges to some value, it doesn't matter which norm you use.
