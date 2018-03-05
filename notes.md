@@ -1137,7 +1137,8 @@ f[]:
 ```
 
 The table:
-| xk | yk = f[xk] | f[ , ] | f[ , , ] | f [ , , , ]
+
+| xk | yk = f[xk] | f[ , ] | f[ , , ] | f [ , , , ] |
 | - | - | - | - | - |
 | x0 | y0 | - | - | - |
 | x1 | y1 | f[x0, x1] | - | - |
@@ -1657,3 +1658,14 @@ Because of this, we know there are two more constants, `c_3` and `c_4` which sho
 Why is this important? What does this theorem give us?
 
 When you judge whether a set sequence of vectors diverges or converges to some value, it doesn't matter which norm you use.
+
+***
+#### 5 March: Matrices
+***
+
+A matrix (an augmented matrix) can be used to represent a system of linear equations, and our matrix operations can easily be used to solve (or not) the system.
+
+**Theorem:** Notebook
+**Matrix Norms:** Notebook
+**Example:** Notebook
+**Frobenius (Operator) Norms:** Notebook
