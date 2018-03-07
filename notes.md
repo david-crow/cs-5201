@@ -296,11 +296,11 @@ float Line::distance(const Point p) const
 
 Requirements for our array class
 1. Runtime sizing - using the constructor
-2. Use of the `[ , ]` operator for indexing into the array
+2. Use of the `[]` operator for indexing into the array
 3. Automatic memory management
 4. Array copying facility
 5. Being able to assign a single value to every element of the array
-6. Resizing of my array
+6. Resizing of the array
 
 ```C++
 // array.h
@@ -338,7 +338,7 @@ private:
 Array<T>::Array()
 {
     m_size = 0;
-    ptr_to_data = NULL;
+    ptr_to_data = nullptr;
 }
 
 <template class T>
@@ -503,7 +503,7 @@ auto y = 5.6; // double
 auto z = x; // double
 ```
 
-But this isn't really useful and *not* what `auto` is good for. If there is not initial value, it won't work. `auto` is useful for using with templates and iterators.
+But this isn't really useful and *not* what `auto` is good for. If there is no initial value, it won't work. `auto` is useful for using with templates and iterators.
 
 example 1:
 
@@ -535,7 +535,7 @@ But this can be simplified using `auto`. Let C++ determine the type of the built
 
 ```C++
 template<class Builder>
-void makeSomething(BUilder& builder)
+void makeSomething(Builder& builder)
 {
     auto val = builder.makeObj();
     // ...
@@ -766,7 +766,7 @@ The steps C++ follows to resolve function calls:
 
 1. Match without the possibility of any conversion
 2. Template match with the possibility of trivial conversion
-3. Function delcaration using the ordinary matching process
+3. Function declaration using the ordinary matching process
 
 ```C++
 template <class T>
@@ -806,7 +806,7 @@ We can define constructors in a .cpp, inline, or with an initialization list.
 class point
 {
 public:
-    point(float x, float y) : m_x(x), m_y(y) {}
+    point(float x, float y): m_x(x), m_y(y) {}
 
 private:
     float m_x;
@@ -823,7 +823,7 @@ private:
 ```
 
 You initialize if:
-1. you have a no default constructor
+1. you have no default constructor
 2. you have a member variable that is a constant
 3. you have a member variable that is a constant reference
 
@@ -847,7 +847,7 @@ You don't have to initialize if:
     - destructor
 
 **Operators (AKA Functions for Special Symbols)**
-o
+
 - You can't change the functionality of an operator for primitives.
 - You can't change the arity of an operator.
 - You can't change the order of precedences.
@@ -993,7 +993,7 @@ if (z)
 5. Cleanup - reverse of initialization
 6. Post-cleanup and deallocation - memory is restored to the free store
 
-There are threee types of objects in C++:
+There are three types of objects in C++:
 
 1. Automatic - allocated when the code requests that allocation and destroyed when out of scope
 2. Static variables - allocated if code runs and they persist until the end of the program
@@ -1042,7 +1042,7 @@ Trace::~Trace()
 
 **Static Variables**
 
-Static variables can give state to a function. Static variables persist to the end of the program, which destroys them kn the reverse order in which they were created. 
+Static variables can give state to a function. Static variables persist to the end of the program, which destroys them in the reverse order in which they were created. 
 
 Local static variables are created first.
 
@@ -1052,11 +1052,11 @@ Local static variables are created first.
 
 - Objects are allocated by a call to `new` and deallocated by a call to `delete`.
 - Objects are created as the program needs them.
-- So, there needs be no releationship between dynamic memory and variables - known at compile time.
+- So, there needs be no relationship between dynamic memory and variables - known at compile time.
 - `new` will invoke the appropriate constructor
-- new arrays of objects require a default constructor
-- upside of dynamic memory: flexibility
-- downside of dynamic memory: memory management
+- New arrays of objects require a default constructor
+- Upside of dynamic memory: flexibility
+- Downside of dynamic memory: memory management
 
 Construction: `int * p = new int; // new takes a type as an argument`
 Or: `int * p = new int[size]; // dynamic array`
@@ -1068,7 +1068,7 @@ Bad deletions lead to *big* problems.
     - Fix: write your own copy constructor and assignment operator
 
     ```C++
-    class Bad
+    class bad
     {
     public:
         bad() { p = new int(0); }
@@ -1160,6 +1160,7 @@ Array squares(const Array& a)
     Array square_array(n);
     for (int i = 0; i < n; i++)
         square_array[i] = a[i] * a[i];
+    return square_array;
 }
 
 int main()
@@ -1189,7 +1190,7 @@ get_x() = 10;
 
 So, an lvalue need not be a variable.
 
-An rvalue is *not* an lvalue. An expression that is a temporrary object.
+An rvalue is *not* an lvalue. An expression that is a temporary object.
 
 ```C++
 int x;
@@ -1221,7 +1222,7 @@ Consider the following two functions:
 
 ```C++
 void printref(const string& s) { cout << s; } // function 1
-void printref(string&& s) { court << s; } // function 2
+void printref(string&& s) { cout << s; } // function 2
 ```
 
 Function 1 will accept any - mutable or not - lvalue or rvalue. However, if Function 2 is present, then Function 1 will accept all *but* mutable rvalue references.
@@ -1244,7 +1245,7 @@ public:
 };
 ```
 
-We set the `other`'s pointer to `null` because it's a temporary object about to be released from The Old ArrayFolks Home."
+We set the `other`'s pointer to `null` because it's a temporary object about to be released from The Old ArrayFolks Home.
 
 Now, suppose that the class you are writing the move constructor for contains an object. How will it be handled?
 
@@ -1277,8 +1278,7 @@ Will this work? Does it work for `Array`'s move constructor to call `data`'s mov
 We must `#include <utility>` for `std::move`.
 
 ```C++
-Array(Array&& other): ptr_to_data(other.ptr_to_data),
-    data(std::move(other.data))
+Array(Array&& other): ptr_to_data(other.ptr_to_data), data(std::move(other.data))
 {
     other.ptr_to_data = nullptr;
 }
@@ -1287,7 +1287,7 @@ Array(Array&& other): ptr_to_data(other.ptr_to_data),
 We have to do the same thing for `data`'s move constructor. The reason: the `other` in `Array`'s move constructor is an rvalue reference. However, an rvalue reference is not an rvalue; it's an lvalue. This means we have to change it. The `std::move` casts that lvalue to an rvalue reference.
 
 ***
-19 February: The Copy/Swap Maneuver
+#### 19 February: The Copy/Swap Maneuver
 ***
 
 ...for the overload of the assignment operator.
@@ -1348,7 +1348,7 @@ We all know that pointers are necessary to programming in C++, but the built-in 
 
 **Aggregation**
 
-...is the combining of different objects into another object, and when your class *contains* a pointer, you have *referential* aggregation. The problem is that the life of the program - and what it points to - don't necessarily coincide. So, when objects get copied (especially by built-in copy constructors), then the possibility of a shallow copy exists. Leaks can be caused in many ways, including ways you hadn't thought of... yet. Additionally, they can happen when you think you have all of your bases covered - a user-defined copy constructor and assignment operator. Programmer-defined objects that wrap up pointers are called *smart pointers*, and they're designed do what they're supposed to do and clean up after themselves. We write smart pointers to preserve a one-to-one relationship between the pointer and what it points to.
+...is the combining of different objects into another object, and when your class *contains* a pointer, you have *referential* aggregation. The problem is that the life of the program - and what it points to - don't necessarily coincide. So, when objects get copied (especially by built-in copy constructors), then the possibility of a shallow copy exists. Leaks can be caused in many ways, including ways you hadn't thought of... yet. Additionally, they can happen when you think you have all of your bases covered - a user-defined copy constructor and assignment operator. Programmer-defined objects that wrap up pointers are called *smart pointers*, and they're designed to do what they're supposed to do and clean up after themselves. We write smart pointers to preserve a one-to-one relationship between the pointer and what it points to.
 
 ```C++
 template <class T>
@@ -1375,7 +1375,7 @@ public:
         if (the_p != rhs.the_p)
         {
             delete the_p;
-            the_p = rhs.is_null ? nullptr : new T(*rhs.the_p);
+            the_p = rhs.is_null() ? nullptr : new T(*rhs.the_p);
         }
 
         return *this;
@@ -1407,8 +1407,8 @@ public:
 
 1. One-to-one relationship between pointer and heap object
 2. Automatic copy is made when C++ auto generated copy constructor is called since the copy constructor for `CBPtr` is called
-3. `delete` the pointer `delete`s the heap object --> no garbage
-4. Has an `is_null` function
+3. `delete` the pointer `delete`s the heap object → no garbage
+4. Has an `is_null()` function
 5. Has comparison operators
 
 ```C++
@@ -1488,7 +1488,7 @@ private:
 
 **Definition:** A vector space is a set of vectors and scalars along with the operations `+` and `·` that adhere to the following:
 
-1. A vector space `V` is closed under vector addition `+` and
+1. A vector space `V` is closed under vector addition `+`
     1. `α + β = β + α`, for all `α`, `β` in `V`
     2. `(α + β) + γ = α + (β + γ)`, for all `α`, `β`, `γ` in `V`
     3. For all `0` in `V` (zero vector), `α + 0 = α`, for all `α` in `V`
@@ -1502,7 +1502,7 @@ private:
 
 **Example**
 
-1. Let `V` be the set of all pairs of real numbers (`R^2`) and the scalars, the real numbers (`R`), and let `+` be defined as the sum of two vectors is: the vector whose components are the usual sum of the operands and scalar multiplication is the usual multiplication. This is a vector space.
+1. Let `V` be the set of all pairs of real numbers (`R^2`) and let the scalars be real numbers (`R`), and let `+` be defined as the sum of two vectors whose components are the usual sum of the operands and scalar multiplication is the usual multiplication. This is a vector space.
 2. `V` is the set of all continuous functions on `[0, 1]`. This is a vector space.
 3. Let `V` be the set of all matrices `A_{mn}` of real entries... this is a vector space.
 4. Let `V = Z^+`, scalars are reals. This is not a vector space.
@@ -1515,7 +1515,7 @@ A subset of vectors `v` in `V` is a subspace if that subset is closed under `+` 
 
 **Defintion:** Let `S = {α_1, ..., α_n}` be a subset of `V`. If any `v` in `V` is some linear combination of the vectors in `S`, then `S` is said to span `V`. `S` is a *spanning set*.
 
-**Definition:** A set `S = {α_1, ..., α_n}` be a subset of `V`. `S` is said to be linearly dependent if there exists `a_i`, `1 <= i <= n`, not all `0`, such that `a_1 * α_1 + a_2 * α_2 + ... + a_n * α_n = 0`.
+**Definition:** Let set `S = {α_1, ..., α_n}` be a subset of `V`. `S` is said to be linearly dependent if there exists `a_i`, `1 <= i <= n`, not all `0`, such that `a_1 * α_1 + a_2 * α_2 + ... + a_n * α_n = 0`.
 
 If, given `a_1 * α_1 + a_2 * α_2 + ... + a_n * α_n = 0`, the solution is `a_1 = a_2 = ... = a_n = 0`, then `S` is said to be linearly independent.
 
@@ -1669,3 +1669,47 @@ A matrix (an augmented matrix) can be used to represent a system of linear equat
 **Matrix Norms:** Notebook
 **Example:** Notebook
 **Frobenius (Operator) Norms:** Notebook
+
+***
+#### 7 March: Your Matrix Class, The Exam
+***
+
+**Matrix Implementation Ideas**
+
+1. `Array<Array<T>> element;`
+    - Quick and dirty
+    - Easy
+    - Lot of constructor calls
+2. `Array<T>* element;`
+    `element = new Array<T>[rows];`
+    - Pointer to array of points
+3. `T * element;`
+    `element = new T[rows * cols];`
+    - Pointer arithmetic
+    - One single array
+4. `T** element;`
+    `element = new T*[rows];`
+    `for (i = 0; i < rows; i++) element[i] = new T[cols];`
+
+Whichever you choose, think in terms of future assignments. Think in terms of derivations (what the child classes will look like, what they'll inherit from the base).
+
+Consider different matrices (upper triangular, lower triangular, sparse, banded).
+
+**The Exam**
+
+1. Makefiles
+2. UML
+3. C++ (chapters 4-7)
+4. A bunch of linear algebra crap
+    - Norms
+    - Inner product space
+    - Equivalence of Norms Theorem
+    - Cauchy-Schwarz and Triangle-Inequality (proofs, too!)
+5. CS1570 format
+    - What's wrong with this code?
+    - Write some code to do such-and-such.
+    - What's the principle at play?
+    - Why do we do things this way?
+    - Why is this a good idea?
+6. Also, look at Chapter 8. Don't read 1-3.
+7. Look at the sidebar links on his website.
