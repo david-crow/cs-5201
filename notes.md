@@ -1713,3 +1713,34 @@ Consider different matrices (upper triangular, lower triangular, sparse, banded)
     - Why is this a good idea?
 6. Also, look at Chapter 8. Don't read 1-3.
 7. Look at the sidebar links on his website.
+
+***
+#### 12 March: Tools to Fix Your Code
+***
+
+**gdb-GNU Debugger**
+
+When compiling, use the `-g` flag. When running gdb, use the following commands:
+
+| command | action |
+| - | - |
+| `break` | set a breakpoint |
+| `step` | runs the next line of code |
+| `print` | print a variable |
+| `next` | runs the next line in the current function |
+| `backtrace` | view the current backtrace |
+| `continue` | resume where we left off |
+| `set` | change a variable's value |
+| `finish` | run until the function returns |
+
+**Valgrind**
+
+memcheck can find four different kinds of problems:
+1. Uninitialized values
+2. Invalid reads/writes
+3. Mismatched/double deletes
+4. Memory leaks
+
+**Cachegrind**
+
+You can use this to see what happens when the code runs. For example, view charts about processor utilization, order of calls, the number of calls, etc.
