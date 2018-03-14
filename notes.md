@@ -115,7 +115,7 @@ Macros can be used on the command line. For example, `...$ make FLAGS=hello`.
 **Macro Assignment Priority**
 1. Default definitions of `make` (least important)
 2. Current shell environment variables
-    Note: `make -c` will force #2 to dominate all but command line    
+    Note: `make -c` will force #2 to dominate all but command line
 3. Description file definitions
 4. Command line definitions (most important)
 
@@ -269,7 +269,7 @@ class Line
         Point intersection(const Line l) const;w
         float distance(const Point p) const;
         static float parallel_tolerance;
-    
+
     private:
         float m_a, m_b, m_c;
 };
@@ -592,7 +592,7 @@ auto student::getAge()
 }
 ```
 
-How does this help with the foregoing example? We need something new. While `auto` allows the declaration of a particular type, `decltype` allows you to *extract* a type. 
+How does this help with the foregoing example? We need something new. While `auto` allows the declaration of a particular type, `decltype` allows you to *extract* a type.
 
 ```C++
 int x = 3;
@@ -933,7 +933,7 @@ complex complex::file_read(istream& in = cin)
 }
 
 complex z = complex::file_read(input); // where input is a stream
-// z.file_read(...) does not work because it's not a member function 
+// z.file_read(...) does not work because it's not a member function
 
 struct stooge
 {
@@ -1042,7 +1042,7 @@ Trace::~Trace()
 
 **Static Variables**
 
-Static variables can give state to a function. Static variables persist to the end of the program, which destroys them in the reverse order in which they were created. 
+Static variables can give state to a function. Static variables persist to the end of the program, which destroys them in the reverse order in which they were created.
 
 Local static variables are created first.
 
@@ -1744,3 +1744,107 @@ memcheck can find four different kinds of problems:
 **Cachegrind**
 
 You can use this to see what happens when the code runs. For example, view charts about processor utilization, order of calls, the number of calls, etc.
+
+***
+#### 14 March: Lambdas in C++
+***
+
+- Anonymous functions
+- Closures
+- Shorthand for functor classes
+- Good for writing "glue code"
+
+**Syntax**
+
+```C++
+auto func = []() -> int { /* body */ };
+```
+
+Here, `auto` is required, `[]` is the capture clause, `()` is for the parameters, `-> int` is the return type (this is optional), and `{}` houses the body.
+
+**Examples**
+
+```C++
+auto hi = []() { cout << "hello"; };
+hi();
+```
+
+```C++
+auto add5 = [](int x) { return 5 + x; };
+add5(2); // 7
+```
+
+```C++
+int amount;
+cout << "Enter the amount: ";
+cin >> amount; // let's say we get 2
+
+
+auto add_some = [=](int x) {
+    return x + amount;
+};
+
+add_some(3); // 5
+```
+
+```C++
+template <class Func>
+void call_with_3(Func f) {
+    f(3);
+}
+```
+
+**Capture Clauses**
+
+- `=` → capture by value
+    - makes a `const` copy
+- `&` → capture by reference
+    - lets you modify things in the calling function
+- `this` → captures the calling object
+
+**More Examples**
+
+```C++
+int amount = 7;
+int calls = 0;
+
+auto add_and_count = [amount, &calls](int x) -> int
+{
+    calls++;
+    return x + amount;
+}
+
+call_with_3(add_and_count); // 10
+cout << calls << endl; // 1
+```
+
+```C++
+auto Lambda = [=](Vector<float> v) { return v * scalar; };
+
+// alternatively
+class MS
+{
+private:
+    float the_scalar;
+
+public:
+    MS(float scalar): the_scalar(scalar) {}
+    Vector<float> operator()(Vector<float> v) { return v * the_scalar; }
+};
+```
+
+**Passing Call-ables to Functions**
+
+What is a callable?
+- Function pointers
+- Functor classes
+    - → `operator()`
+
+```C++
+call_with_3(int (*f)(int)) { f(3); }
+```
+
+```C++
+template <class Func>
+call_with_3(Func f) { f(3); }
+```
