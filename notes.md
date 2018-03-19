@@ -1840,11 +1840,89 @@ What is a callable?
 - Functor classes
     - → `operator()`
 
-```C++
-call_with_3(int (*f)(int)) { f(3); }
+```C++ i;
+
+call_with_3(int (*f)(int)) {
+    f(3);
+}
 ```
 
 ```C++
 template <class Func>
-call_with_3(Func f) { f(3); }
+call_with_3(Func f) {
+    f(3);
+}
 ```
+
+***
+#### 19 March: Commonality of Behavior
+***
+
+The greatest utility of a language like C++ is its object-oriented design. One of the principal reasons for a course like this one is to express the usefulness of its capabilities. Object-oriented programming not only gives us the ability to closely model reality, but it also allows us to produce code that is adaptable and maintainable.
+
+So far, we've learned about encapsulation. We encapsulate data and functionality into classes. We do this so as to be able to better control *how* objects are used and modified. So, now we take the concept of abstraction one level higher. By using inheritance and virtual functions, we will be able to model the idea "is usable as." Here, then, we introduce base classes.
+
+| GPIBController |
+| - |
+| +insert(char *, int) |
+| +send(int, float) |
+| +send(int, char *) |
+| +receive(int): float |
+
+| Acme130 |
+| - |
+| -my_control: GPIBController |
+| -address: int |
+| +Acme130( ) |
+| +set( ) |
+| +min( ) |
+| +max( ) |
+
+| VoltyMetrix |
+| - |
+| -controller: GPIBController |
+| -address: int |
+| +VoltyMetrix( ) |
+| head( ): float |
+
+| Calibration(Acme130& ...) |
+| - |
+
+In the real world, objects have *state* and *behavior*. State describes - at any instant in time - what the object *is*. Behavior describes how it affects other objects and how it is affected by others - how it responds to stimuli. C++ objects have the same descriptors. They have member variables (the object's state) and member functions (the object's behavior).
+
+```C++
+class GPIBController
+{
+public:
+    void insert(char* device_name, int address);
+    void send(int address, char* command);
+    void send(int address, float v_value);
+    float receive(int address);
+}; // notice there are no state variables - only behavior
+
+class Acme130
+{
+public:
+    Acme130(GPIBController& control, int address);
+    void set(float volts);
+    float min();
+    float max();
+
+private:
+    GPIBController my_controller;
+    int gpib_address;
+};
+
+Acme130::Acme130(GPIBController& control, int address)
+{
+    my_controller = control;
+    gpib_address = address;
+    my_controller.insert("Acme130", gpib_address);
+}
+```
+
+**Encapsulation**
+
+The goal of encapsulation is to hide information. What information? We hide data... in obvious ways/reasons. We also hide implementations of behavior. We hide *how* functionality is coded; we also do this by not exposing data structures and by using general terms - using iterators, for example. In addition, we can add layers of abstraction using inheritance. For example, we may want a voltage supply to hook into the `GPIBController`. Do we care what kind it is? Probably not. As long as the object has the functionality we require, we don't care whether it's an `Acme130` or a `VoltOn59` (the `VoltOn59` is pretty much exactly the same as the `Acme130`).
+
+We can *generalize* the Acme and VoltOn voltage supplies to a type of object that we will call `VoltageSupply`. Separating the code that specifies implementation of objects from code that uses the objects and so allows code that uses object to access *only behavior* (the functions) and not state representation (data structures) gives us code that is adaptable and versatile. So, implementation can change while interface remains unchanged.
