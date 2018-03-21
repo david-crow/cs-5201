@@ -1905,8 +1905,8 @@ class Acme130
 public:
     Acme130(GPIBController& control, int address);
     void set(float volts);
-    float min();
-    float max();
+    float min() const;
+    float max() const;
 
 private:
     GPIBController my_controller;
@@ -1926,3 +1926,125 @@ Acme130::Acme130(GPIBController& control, int address)
 The goal of encapsulation is to hide information. What information? We hide data... in obvious ways/reasons. We also hide implementations of behavior. We hide *how* functionality is coded; we also do this by not exposing data structures and by using general terms - using iterators, for example. In addition, we can add layers of abstraction using inheritance. For example, we may want a voltage supply to hook into the `GPIBController`. Do we care what kind it is? Probably not. As long as the object has the functionality we require, we don't care whether it's an `Acme130` or a `VoltOn59` (the `VoltOn59` is pretty much exactly the same as the `Acme130`).
 
 We can *generalize* the Acme and VoltOn voltage supplies to a type of object that we will call `VoltageSupply`. Separating the code that specifies implementation of objects from code that uses the objects and so allows code that uses object to access *only behavior* (the functions) and not state representation (data structures) gives us code that is adaptable and versatile. So, implementation can change while interface remains unchanged.
+
+***
+#### 21 March: Interface Bases
+***
+
+To our system, we add two components: first, a meter for testing voltages, and second, a function called `calibrate()`, which is used to calibrate voltage supply.
+
+```C++
+#include <math.h> // fabs()
+
+class VoltyMetrics
+{
+public:
+    VoltyMetrics(GPIBController& control, int address);
+    float read() { return my_controller.receive(address); };
+
+private:
+    GPIBController my_controller;
+    int my_address;
+};
+
+// non-member
+float calibrate(Acme130& supply, VoltyMetrics& meter, float test_voltage)
+{
+    supply.set(test_voltage);
+    return fabs(test_voltage - meter.read()); // doesn't really matter
+}
+```
+
+So, we put this system together and it all works fine. However, what happens when our Acme130 blows up and is no longer usable? Well, in the real world, we walk down the hall and borrow a VoltOn59 from Larry. So, it works, it is plug-adaptable... except, in our model, it just doesn't.
+
+The code requires an Acme130. So, what? Change the code. The problem is that we can go on changing code forever, and that's just impractical. Instead, we're going to think *globally*. We're not going to code for specifics; we're going to code for *categories*.
+
+We now make our first base class.
+
+```C++
+class VoltageSupply
+{
+public:
+    virtual void set(float volts) = 0;
+    virtual float min() const = 0;
+    virtual float max() const = 0;
+    virtual ~VoltageSupply() {};
+};
+```
+
+The functions that end in `= 0` are *pure virtual functions*. No instances of any class containing pure virtual functions can be created. We cannot create a `VoltageSupply`. This class is what we call an *interface class* (or *interface base*). Usually, interface bases contain pure virtual functions - but they don't have to - and no state (member variables). The term *interface base* is a design term, not a C++ term. The idea is to put common behavior in an interface. We now have to change `calibrate()`.
+
+```C++
+float calibrate(VoltageSupply& supply, VoltyMetrics& meter, float test_voltage)
+{
+    // ...
+}
+```
+
+We also need to change `Acme130` and `VoltOn59`.
+
+```C++
+class Acme130: public VoltageSupply
+{
+public:
+    Acme130(GPIBController& control, int address);
+    virtual void set(float volts);
+    virtual void min() const;
+    virtual void max() const;
+
+private:
+    GPIBController my_controller;
+    int my_address;
+};
+```
+
+Now, the `Acme130` is usable as a `VoltageSupply`. Likewise, the `VoltOn59` (it's identical to `Acme130`) is usable as a `VoltageSupply`.
+
+**Note:** The designation of `public` derivation means that instances of this derived class can be used through references and pointers to the base class (like in the parameter list for the `calibrate()` function).
+
+The `virtual` designations in a derived class are *not* required, but they are convention (to make it clear that the functions are derived from a pure virtual class).
+
+All aspects of the function signature in the derived class(es) should be the same as in the base.
+
+Interface base classes don't have constructors. They don't have state variables.
+
+An *interface base* has no data. An *abstract base* has *pure virtual* functions. You should use abstract bases as your interface in function parameters. This is because you are forcing the compiler to flag any undefined functions in a derived class that aren't defined.
+
+Classes can be derived from more than one base. Let's consider writing a second interface base class. We'll create a base class for the category of any GPIB-type device or instrument (i.e. not just voltage supplies).
+
+```C++
+class GPIBInstrument
+{
+public:
+    virtual void send(char*) = 0;
+    virtual void send(float) = 0;
+    virtual float receive() = 0;
+    virtual ~GPIBInstrument() {};
+};
+```
+
+This is an interface for a generalized GPIB instrument. The `Acme130` and the `VoltOn59` are both of this type.
+
+```C++
+class Acme130: public VoltageSupply, public GPIBInstrument
+{
+public:
+    Acme130(GPIBController& control, int address);
+
+    // VoltageSupply interface
+    virtual void set(float volts);
+    virtual void min() const;
+    virtual void max() const;
+
+    // GPIBInstrument interface
+    virtual void send(char*);
+    virtual void send(float);
+    virtual float receive();
+
+private:
+    GPIBController my_controller
+    int my_address;
+};
+```
+
+**Note:** The second derivation is independent of the first.
