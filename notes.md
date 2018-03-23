@@ -1878,11 +1878,11 @@ So far, we've learned about encapsulation. We encapsulate data and functionality
 | +min( ) |
 | +max( ) |
 
-| VoltyMetrix |
+| VoltyMetrics |
 | - |
 | -controller: GPIBController |
 | -address: int |
-| +VoltyMetrix( ) |
+| +VoltyMetrics( ) |
 | head( ): float |
 
 | Calibration(Acme130& ...) |
@@ -2048,3 +2048,83 @@ private:
 ```
 
 **Note:** The second derivation is independent of the first.
+
+***
+##### 23 March: More Interface Bases
+***
+
+So, we have seen that client code, such as the calibration function, that can be passed an object of a derived type via a reference or pointer to a base class (parameter). We can also make an interface base type a member of a class. If we do this, however, it has to be as a reference (or pointer) to that type.
+
+Let's show this by generalizing the `GPIBController` to make it an interface - representing any of many types of GPIB controllers.
+
+```C++
+class GPIBController
+{
+public:
+    virtual void insert(...) = 0;
+    virtual void send(...) = 0;
+    virtual void send(...) = 0;
+    virtual float receive() = 0;
+    virtual ~GPIBController();
+};
+```
+
+We'll now modify the original `GPIBController`. Let's call it `GPIB`.
+
+```C++
+class GPIB: public GPIBController
+{
+public:
+    virtual void insert(...);
+    virtual void send(...);
+    // et cetera
+};
+```
+
+Thus, it's the same as before except that it derives from an interface base class. Now, we must generalize the `Acme130` (and `VoltOn59`).
+
+```C++
+class Acme130: public VoltageSupply, public GPIBInstrument
+{
+public:
+    Acme130(GPIBController& controller, ...);
+    // ...
+
+private:
+    GPIBController& my_controller;
+    // ...
+};
+```
+
+The constructor initializes the reference data member so that the controller is of any kind of `GPIBController`, and we really don't need to know what kind (the details) as long as it can be derived from the interface and have its functionality.
+
+As another example, let's create an IV (current-voltage) tester class.
+
+```C++
+class IVTester
+{
+public:
+    IVTester(VoltageSupply& vs, VoltyMetrics& vm): supply(vs), meter(vm) {};
+    float current(...);
+
+private:
+    VoltageSupply& supply;
+    VoltyMetrics& meter;
+};
+```
+
+We can now create an `IVTester` object with any combination of `VoltageSupply` and `VoltyMetrics` that we want.
+
+Now, is it possible to have an array of these different instruments? Yes - we create an array of pointers to the interface base type. As long as the objects that the pointers point to are derived from that base type, we can *connect* them.
+
+```C++
+class GPIBController_GIS: public GPIBController
+{
+public:
+    // ...
+
+private:
+    const SimulatorFactor& sim_fact;
+    Array<GPIBInstrumentSimulation*> simulators;
+};
+```
