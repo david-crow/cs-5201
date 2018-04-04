@@ -2232,3 +2232,95 @@ float max_element(Array& a)
 ```
 
 Which `operator[]` is used? Is it checked or is it unchecked? It's the base class version (unchecked) that is used.
+
+***
+#### 4 April: What About Interfaces and Extension by Inheritance?
+***
+
+The Acme Corporation introduces their new voltage supply, the Acme140, which behaves a lot like the Acme130, but...
+
+```C++
+class Acme140: public Acme130
+{
+public:
+    enum Jumper {J1, J2};
+    Acme140(GPIBController& controller, int address, Jumper j);
+    virtual float max() const;
+
+private:
+    float max_volts;
+};
+```
+
+So, the `Acme140` inherits everything from the `Acme130`, but it also allows for a jumper value to determine its max voltage output. Thus, the `Acme140` is usable as an `Acme130`, as a `VoltageSupply`, and as a `GPIBInstrument`. Note, however, that the `Acme130` is an implementation base and *not* an interface base. So, we have to have a constructor for the `Acme140`.
+
+```C++
+Acme140::Acme140(GPIBController& controller, int address, Jumper j):
+    Acme130(controller, address), max_volts(j == J1 ? 10 : 50) {};
+```
+
+So, here it calls the `Acme130`'s base initializer and then initializes its own member variable.
+
+We must also provide a new `max()` function for the `Acme140` so that `Acme140` objects can indeed behave like `Acme140` objects.
+
+```C++
+float Acme140::max() const
+{
+    return max_volts;
+}
+```
+
+Derived-class-defined virtual functions *override* the base class definitions.
+
+```C++
+// ...
+Acme140 supply(gpib, 16, Acme140::J2);
+cout << supply.max() << endl; // 50
+
+Acme130& as_130 = supply;
+cout << as_130.max() << endl; // 50
+
+VoltageSupply& as_vs = supply;
+cout << as_vs.max() << endl; // 50
+```
+
+Why? Because the function (`max()`) is virtual. We get object-oriented behavior.
+
+```C++
+void Acme130::set(float v)
+{
+    if (v > max() || v < min()) throw hissy_fit();
+    send(v);
+    return;
+}
+```
+
+Since the `Acme140` derives from the `Acme130` and `max()` is virtual, then the correct `max()` is called - that for the `Acme140` rather than for the `Acme130`. So,
+
+```C++
+supply.set(20); // works
+as_130.set(20); // works
+
+Acme140 s(gpib, 3, Acme140::J1);
+s.set(20); // error (because J1 is out of bounds)
+```
+
+**Problems That Result From Public Inheritance**
+
+1. Public inheritance exposes implementation - an implementation decision. Recall: you should hide implementation (decisions). If client code exploits that decision, then change will hurt. If you decided to change how you implement, then clients will also have to change.
+2. We have forced the use of virtual functions, even though that is what gives us the true object-oriented behavior. If the virtual funciton `max()` was not virtual, then the `max()` invoked would be determined by the reference or pointer it was used through. So, if `max()` was not virtual, then calling it for an `Acme140` as an `Acme130` would result in an incorrect value. Virtual function overhead is expensive, but extension by inheritance requires us to use them. Thus, avoid new definitions of functions in derived classes if they are non-virtual. Public inheritance suggests that we declare base class functions virtual unless there's a *good* reason not to:
+    1. When making a concrete class (for a specific purpose - unlikely to be extended), then you save on the virtual function overhead.
+    2. Sometimes you simply want consistency from parent to child. Consider:
+        ```C++
+        void print_max(Acme130 a)
+        {
+            cout << "Max voltage is " << a.max() << endl;
+            return;
+        }
+        ```
+        ...and `supply1` and `supply2` of the type `Acme140` with `supply1` having a max of 50 and `supply2` having a max of 10.
+        ```C++
+        print_max(supply1); // 10
+        print_max(supply2); // 10
+        ```
+        This is because the parameter to the function is *not* a reference, and, because it's not, a copy is made... of the base subobject. That parameter is treated like an `Acme130` and not like an `Acme140`. The `Acme130` is both the implementation and interface base for the `Acme140`, so the compiler can't catch the mistake. The lesson is: use references to base classes to have the compiler help you stay on the straight and narrow path to C++ salvation.
