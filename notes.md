@@ -2324,3 +2324,91 @@ s.set(20); // error (because J1 is out of bounds)
         print_max(supply2); // 10
         ```
         This is because the parameter to the function is *not* a reference, and, because it's not, a copy is made... of the base subobject. That parameter is treated like an `Acme130` and not like an `Acme140`. The `Acme130` is both the implementation and interface base for the `Acme140`, so the compiler can't catch the mistake. The lesson is: use references to base classes to have the compiler help you stay on the straight and narrow path to C++ salvation.
+
+***
+#### 6 April: Member Function Forwarding
+***
+
+```C++
+class Acme130: public VoltageSupply, public GPIBInstrument
+{
+public:
+    Acme130(GPIBController& control, int address);
+    // VoltageSupply interface
+    // ...
+    // GPIBInterface
+    virtual void send(char*);
+    virtual void send(float);
+    virtual float receive();
+
+private:
+    GPIBController my_controller;
+    int my_address;
+};
+```
+
+Well, the `VoltOn59` looks exactly like this and also derives from `GPIBInstrument`. Likewise, the `VoltyMetrics` derives from `GPIBInstrument`.
+
+All three of these classes derive from `GPIBInstrument` and use the same functions and data. We can avoid all of this replication by placing it all in another class and employing *function forwarding*.
+
+```C++
+class GPIBInstrumentData
+{
+public:
+    GPIBInstrumentData(GPIBController& control, int address, const char* name);
+    // instrument interface
+    void send(char*);
+    void send (float;
+    float receive();
+
+private:
+    GPIBController& my_controller;
+    int my_address;
+};
+```
+
+**Note:** It is structurally the same as the `Acme130`, the `VoltOn59`, and the `VoltyMetrics`, but it is not like the interface bases.
+
+The function implementations are the same as was in the `Acme130`, the `VoltOn59`, and the `VoltyMetrics`, but we now have just one version.
+
+**Example**
+
+```C++
+void GPIBInstrumentData::send(float f)
+{
+    my_controller.send(my_address, f);
+    return;
+}
+```
+
+The constructor is going to initialize the data and it inserts the device onto the controller. However, since it isn't for a particular device, it has to have a third parameter; that's the name of the device.
+
+```C++
+GPIBInstrumentData::GPIBInstrumentData(GPIBController& control, int address), const char* name):
+    my_controller(control), my_address(address)
+{
+    my_controller.insert(name, address);
+}
+
+// now, we need to fix the classes
+class Acme130: public VoltageSupply, public GPIBInstrument
+{
+private:
+    GPIBInstrumentData gpib_rep;
+
+public:
+    Acme130(GPIBController& control, int address): gpib_rep(controller, address, "Acme130") {};
+    // VoltageSupply interface
+    // instrument interface
+    virtual void send(char* c) { gpib_rep.send(c); }
+    virtual void send(float f) { gpib_rep.send(f); }
+    virtual float receive() { return gpib_rep.receive(); }
+};
+```
+
+**Note:** My notebook contains a diagram of the implementation.
+
+**Problems**
+
+1. Still have replicated code
+2. What if you want to derive something?
