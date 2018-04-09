@@ -2412,3 +2412,81 @@ public:
 
 1. Still have replicated code
 2. What if you want to derive something?
+
+***
+#### 9 April: Implementation Using Inheritance
+***
+
+We now use inheritance/derivation to accomplish what we set out to do with function forwarding. First, change the `GPIBInstrumentData` to be derived from the `GPIBInstrument` so that it implements our interface.
+
+```C++
+class GPIBInstrumentData: public virtual GPIBInstrument
+{
+public:
+    GPIBInstrumentData(GPIBController& control, int address, const char* name);
+    // GPIB interface
+    virtual void send(char*);
+    virtual void send(float);
+    virtual float receive();
+
+private:
+    GPIBController& my_controller;
+    int my_address;
+};
+```
+
+So, the `GPIBInstrumentData` is usable as a `GPIBInstrument`. The `GPIBInstrument` is a *virtual base*. The implementations of the functions remain the same. Now, we rewrite the `Acme130`.
+
+```C++
+class Acme130:
+    public virtual VoltageSupply,
+    public virtual GPIBInstrument,
+    private GPIBInstrumentData
+{
+public:
+    Acme130(...);
+    // VoltageSupply interface
+    virtual void set(...);
+    virtual float min();
+    virtual float max();
+};
+```
+
+**Notes**
+
+- The virtual derivations from base classes
+- The private derivation from the ipmlemenation base
+- Any instance of an `Acme130` contains a base sub-object of the base
+- Because of the private derivation, it is *not* usable as a `GPIBInstrumentData` object
+- The private derivation *hides* the implementation of this class
+
+Notice, the `Acme130` does *not* implement the instrument interface functions. Those are privately inherited from the `GPIBInstrumentData` interface. Public access of the member functions is blocked. Clients have to access the functionality throught that interface. They have to access them through the *same* interface base as the `GPIBInstrumentData`. This is the reason for the virtual derivation. Function calls are routed through the implemenation base.
+
+**Example**
+
+```C++
+Acme130 s(gpib, 4);
+s.send(10); // we can't do this. the private derivation prohibits it
+
+GPIBInstrument* g = new Acme130(gpib, 4);
+g.send(10); // this works fine
+
+GPIBInstrument& t = *g;
+t.send(10); // this also works
+```
+
+The whole idea is that you use the functionality of the particular devices through the interface. You can also *override* the privacy inherited from that implementation base by declaring something public.
+
+```C++
+class Acme130:
+    public virtual VoltageSupply,
+    public virtual GPIBInstrument,
+    private GPIBInstrumentData
+{
+public:
+    GPIBInstrumentData::send;
+    // ...
+};
+```
+
+Then, all of the code in the example above will work. However, this goes against the whole idea of inheriting privately.
