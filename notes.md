@@ -2406,7 +2406,7 @@ public:
 };
 ```
 
-**Note:** My notebook contains a diagram of the implementation.
+**Note:** My notebook contains a diagram (Figure 10) of the implementation.
 
 **Problems**
 
@@ -2490,3 +2490,78 @@ public:
 ```
 
 Then, all of the code in the example above will work. However, this goes against the whole idea of inheriting privately.
+
+***
+#### 11 April: Scope, Dominance, and Accessibility
+***
+
+Inheritance works because the compiler resolves names. A name is an identifier with a meaning. A name has three attributes that we will look at now: scope, dominance, and accessibility. Resolving these will determine how the name works.
+
+We declare a name. Its *scope* is determined by how it is nested in classes, functions, and blocks of code. Whether it *dominates* or is dominated by other names with the same identifier will be determined by its relationship of its class with other class in a directed acyclic graph (DAG). Additionally, of course, *accessibility* is determined by the designation as public, private, or protected.
+
+Identifiers must resolve to the present scope.
+
+```C++
+class Acme230:
+    public virtual VoltageSupply,
+    public virtual GPIBInstrument,
+    private Acme130
+{
+public:
+    Acme230(...);
+    virtual float max();
+    virtual void set(float v);
+    enum Range {low, high};
+    virtual void set(Range r);
+
+private:
+    Range setting;
+};
+```
+
+**Note:** My notebook contains a diagram (Figure 11) of the implementation.
+
+**Scope**
+
+- Private derivation from an implementation base - `Acme130` - and public virtual derivation from its `VoltageSupply` and instrument bases
+- Introduces new names: high and low
+- Introduces a new set functionality (for range value)
+- Redeclare the other (old) `set()` and `max()` functions
+
+```C++
+float Acme230::max()
+{
+    if (setting == high)
+        return 100;
+
+    return 10;
+}
+```
+
+Here, the names high and low must be scoped because, outside the `Acme230` class, they have no meaning.
+
+```C++
+Acme230 s(gpib, 1);
+s.set(Acme230::high);
+```
+
+Derived classes' scope will include the scopes of all base classes. So, all names in the `VoltageSupply`, `GPIBInstrument`, and `Acme130` bases are in the `Acme230`'s scope. Names are inherited. It operates much like block scope.
+
+A name declared in an inner block *hides* the name (with the same identifier) in an outer block. Let's look at `max()`. The `Acme230` inherits `max()` from the `Acme130`, but redeclaring it in the `Acme230` *hides* the `Acme130` meaning. `min()` is also inherited, but it is not hidden.
+
+Now, if the name of a virtual function is redeclared in a derived class and matches in the number and types of parameters, then the base class name is *hidden* and *overridden*. If the number and types of the parameters doesn't match, then *only* hiding takes place, and you're likely to get a compiler warning... generally not a good idea. Since we want both types of `set()` function, we have to ensure that we do have both types.
+
+**Note:** Name hiding occurs before and independently of function overloading. Thus, we declare the following:
+
+```C++
+void Acme230::set(float v)
+{
+    Acme130::set(v);
+}
+```
+
+**Dominance**
+
+Here's the problem: suppose that our class has two bases and inherits the same name from both. Which one applies? For multiple bases, this is a matter of *dominance*. For a single base, this is a matter of *hiding*.
+
+A name declared in a derived class will *dominate* the same name in any base class. As an example, `min()` is declared in the `Acme130`. Now, consider the `Acme230` which derives from both the `Acme130` and the `VoltageSupply`. So, which `min()` applies? It's the `Acme130`'s `min()`. Why? Well, the name that dominates in any DAG will be the one that dominates in that sub-DAG. If a name dominates in a two-class DAG, it will dominate in any DAG that contains it.
