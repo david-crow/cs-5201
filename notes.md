@@ -2565,3 +2565,21 @@ void Acme230::set(float v)
 Here's the problem: suppose that our class has two bases and inherits the same name from both. Which one applies? For multiple bases, this is a matter of *dominance*. For a single base, this is a matter of *hiding*.
 
 A name declared in a derived class will *dominate* the same name in any base class. As an example, `min()` is declared in the `Acme130`. Now, consider the `Acme230` which derives from both the `Acme130` and the `VoltageSupply`. So, which `min()` applies? It's the `Acme130`'s `min()`. Why? Well, the name that dominates in any DAG will be the one that dominates in that sub-DAG. If a name dominates in a two-class DAG, it will dominate in any DAG that contains it.
+
+***
+#### 16 April: Partial Differential Equations
+***
+
+In most scientific investigations (that are worth doing), you model reality using partial differential equations (PDEs). Why? In most studies, you have many variables controlling the system. To model with only one variable is really unrealistic. A PDE can be characterized as the following: an equation relating one or more dependent variables to two or more independent variables and their derivatives with respect to those independent variables.
+
+Some famous partial differential equations include Poisson's Equation, the Heat Equation, and the Wave Equation. In the first one, if `f ≡ 0`, then we call it Laplace's Equation.
+
+What is a solution to a PDE? We're looking for any function of the required number of independent variables that satisifies the PDE. Solving PDEs is really, really, really difficult.
+
+**Boundary Value / Initial Value Problems**
+
+We will solve the Direchlet Problem for Poisson's Equation. This means we know the solution to the PDE on the boundary of the domain. Here's our problem: solve `uxx + uyy = g(x, y)` for `(x, y) ∈ Ω` with `u(x, y) = f(x, y)` on boundary of `Ω`. To make this problem tractable, let's assume the domain, `Ω`, is the unit square `0 ≤ x ≤ 1`, `0 ≤ y ≤ 1`. Let's take `N > 0` to be the number of partitions of both dimensions with `h = 1 / N`.
+
+If we assume that the function we seek is `e^4(Ω)`, and that we'll then use the `O(h^2) centered difference formula for the approximation to the second derivative of the function, we can use the following derivative for our solution:
+
+`G"(x) = [G(x + h) - 2G(x) + G(x - h)] / h^2 - (h^2 / 12) * G""(η)`, where `η` is necessarily unknown. If we use this approximation to the second derivative in our PDE in both directions, we get [continued in notebook]...
