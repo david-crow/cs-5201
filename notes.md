@@ -2583,3 +2583,121 @@ We will solve the Direchlet Problem for Poisson's Equation. This means we know t
 If we assume that the function we seek is `e^4(Ω)`, and that we'll then use the `O(h^2) centered difference formula for the approximation to the second derivative of the function, we can use the following derivative for our solution:
 
 `G"(x) = [G(x + h) - 2G(x) + G(x - h)] / h^2 - (h^2 / 12) * G""(η)`, where `η` is necessarily unknown. If we use this approximation to the second derivative in our PDE in both directions, we get [continued in notebook]...
+
+***
+#### 18 April: Curiously Recursive Template Pattern (Barton-Nackmon Trick)
+***
+
+**Applications**
+
+- Static polymorphism
+    - No Vtable
+    - Objects use less RAM
+    - Function calls can be much faster
+    - More complex
+    - Results in more code/a bigger executable
+    - Must know types at compile time
+- Mixins
+    - Provide common implementation of features
+
+**Implementation**
+
+```C++
+// interface
+template <class Derived>
+class Base
+{
+public:
+    int foo()
+    {
+        return asDerived.foo();
+    }
+
+    Derived& asDerived()
+    {
+        return static_cast<Derived&>(*this);
+    }
+};
+
+class Seven: public Base<Seven> // curiously recursive
+{
+public:
+    int foo()
+    {
+        return 7;
+    }
+};
+
+Seven s;
+std::cout << s.foo() << std::endl; // 7
+
+Base<Seven> b;
+std::cout << b.foo() << std::endl; // 7
+
+template <class Derived>
+void print_foo(Base<Derived> b) // not virtual, so we can pass by value
+{
+    cout << b.foo() << endl;
+}
+
+// this works
+Base<Seven> s;
+Base<Eleven> e;
+print_foo(s);
+print_foo(e);
+
+// this also works
+Seven s;
+Eleven e;
+print_foo(s);
+print_foo(e);
+```
+
+Let's edit the two classes.
+
+```C++
+template <class Derived>
+class Base
+{
+public:
+    int foo()
+    {
+        return asDerived.foo_impl();
+    }
+
+    Derived& asDerived()
+    {
+        return static_cast<Derived&>(*this);
+    }
+
+    int foo_impl()
+    {
+        return -1;
+    }
+};
+
+class Seven: public Base<Seven> // curiously recursive
+{
+public:
+    int foo_impl()
+    {
+        return 7;
+    }
+};
+```
+
+What if we want to call the function that returns `-1`? Add this class:
+
+```C++
+class neg_one: public Base<neg_one> {};
+```
+
+**Mixins**
+
+```C++
+void asdf(Shape& s)
+{
+    // Shape* bob = new Shape(s); // can't do this because Shape is abstract
+    Shape* bob = s.clone();
+}
+```
