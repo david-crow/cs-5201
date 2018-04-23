@@ -2701,3 +2701,111 @@ void asdf(Shape& s)
     Shape* bob = s.clone();
 }
 ```
+
+***
+#### 23 April: Callbacks
+***
+
+**Method 1**
+
+```C++
+double integrate(double a, double b, int num_points, double (*f)(double))
+{
+    double delta = (b - a) / (num_points - 1);
+    double sum = 0;
+
+    for (int i = 0; i < num_points; i++)
+        sum += f(a + i * delta);
+
+    return sum * (b - a) / num_points;
+}
+
+// the call
+double something = integrate(3, 4, 100, cos);
+```
+
+**Method 2**
+
+```C++
+class Integrator
+{
+public:
+    double integrate(double a, double b, int num_points)
+    {
+        double delta = (b - a) / (num_points - 1);
+        double sum = 0;
+
+        for (int i = 0; i < num_points; i++)
+            sum += function_to_integrate(a + i * delta);
+
+        return sum * (b - a) / num_points;
+    }
+
+    virtual double function_to_integrate(double x) = 0;
+};
+
+class IntegrateMe: public Integrator
+{
+public:
+    virtual double function_to_integrate(double x)
+    {
+        return cos(0);
+    }
+};
+
+// the call
+IntegrateMe f;
+double something = f.integrate(0, 3.14159, 4500);
+```
+
+**Method 3**
+
+```C++
+class Function1
+{
+public:
+    double operator()(double x)
+    {
+        return 1.0 / (1 + x * x);
+    }
+};
+
+template <class T_function>
+double integrate(double a, double b, int num_points, T_function f)
+{
+    double delta = (b - a) / (num_points - 1);
+    double sum = 0;
+
+    for (int i = 0; i < num_points; i++)
+        sum += f(a + i * delta);
+
+    return sum * (b - a) / num_points;
+}
+
+// the call
+double something = integrate(1, 2, 100, Function1());
+```
+
+**Method 4**
+
+```C++
+double function1(double x)
+{
+    return 1.0 / (1 + x * x);
+}
+
+template <double T_function(double)>
+double integrate(double a, double b, int num_points)
+{
+    double delta = (b - a) / (num_points - 1);
+    double sum = 0;
+
+    for (int i = 0; i < num_points; i++)
+        sum += T_function(a + i * delta);
+
+    return sum * (b - a) / num_points;
+}
+
+// the call
+double something = integrate<function1>(1, 2, 100);
+```
