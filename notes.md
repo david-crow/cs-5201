@@ -2809,3 +2809,130 @@ double integrate(double a, double b, int num_points)
 // the call
 double something = integrate<function1>(1, 2, 100);
 ```
+
+***
+#### 27 April: Traits Classes
+***
+
+With traits classes, you can create a mapping of typenames that can be very useful. Here are some examples:
+
+**Example 1**
+
+Suppose that you are writing pieces of a code library that is template-able on various numerical types (e.g. `float`, `double`, `long double`). Each type has a set of constants associated with it (e.g. maximum exponent value, an epsilon, a max mantissa) all defined in some header somewhere. The confusion occurs when, after templating on a specific type, you need `FLT_MAX_EXP` or `DBL_MAX_EXP` or whatever, the compiler needs a way to determine which you want.
+
+Here's the traits solution to the problem:
+
+```C++
+template <class numT>
+struct float_traits {}
+
+struct float_traits<float>
+{
+    typdef float float_type;
+    enum { max_exponent = FLT_MAX_EXP };
+    static inline float_type epsilon() { return FLT_ESPILON; }
+};
+
+struct float_traits<double>
+{
+    typedef double float_type;
+    enum { max_exponent = DBL_MAX_EXP };
+    static inline float_type epsilon() { return DBL_EPSILON; }
+};
+
+// et cetera
+```
+
+So, when referring to a `max_exponent` without knowing the type, we have no worries. For example:
+
+```C++
+template <class numT>
+class Matrix
+{
+public:
+    typedef numT num_type;
+    typedef float_traits<num_type> traits_type;
+    inline num_type epsilon() { return traits_type::epsilon(); }
+};
+```
+
+**Example 2**
+
+The `average()` function:
+
+```C++
+template <class T>
+T average(const T* data, const int n)
+{
+    T sum = 0;
+
+    for (int i = 0; i < n; i++)
+        sum += data[i];
+
+    return sum / n;
+}
+```
+
+This works just fine if you want the return type to be the same as the template type. What if you don't want that, though? Here's the traits solution to the problem:
+
+```C++
+template <class T>
+struct float_trait { typedef T T_float; };
+
+template <>
+struct float_trait<char> { typedef double T_float; };
+
+template <>
+struct float_trait<int> { typedef double T_float; };
+
+// et cetera
+```
+
+So, what you map *from* is the template parameter, and what we map *to* is what you put inside the struct. Then, `float_trait<T>::T_float` will evaluate to the appropriate `float` type for that `T_type`.
+
+The `average()` function thus becomes the following:
+
+```C++
+template <class T>
+typename float_trait<T>::T_float average(const T* data, const int n)
+{
+    typename float_trait<T>::T_float sum = 0;
+
+    for (int i = 0; i < n; i++)
+        sum += data[i];
+
+    return sum / n;
+}
+```
+
+**Example 3**
+
+Type promotion:
+
+```C++
+template <class T1, class T2>
+Array<???> operator+(Array<T1>& l, Array<T2>& r);
+```
+
+What will be the template-type for the returned `Array`?
+
+Here's the traits solution:
+
+```C++
+template <class T1, class T2>
+struct promote_trait {};
+
+#define DECLARE_PROMOTE(A, B, C) |
+    template <> struct promote_trait<A, B> { typedef C T_promote; };
+
+// macros
+// DECLARE_PROMOTE(int, char, int)
+// DECLARE_PROMOTE(int, float, float)
+// et cetera
+
+// usage
+template <class T1, class T2>
+Array<typename promote_trait<T1, T2>::T_promote> operator+(Array<T1>& l, Array<T2>& r);
+```
+
+There are lots of other ways to use traits classes. Google them.
