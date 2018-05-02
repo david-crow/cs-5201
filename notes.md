@@ -1779,7 +1779,6 @@ int amount;
 cout << "Enter the amount: ";
 cin >> amount; // let's say we get 2
 
-
 auto add_some = [=](int x) {
     return x + amount;
 };
@@ -2936,3 +2935,17 @@ Array<typename promote_trait<T1, T2>::T_promote> operator+(Array<T1>& l, Array<T
 ```
 
 There are lots of other ways to use traits classes. Google them.
+
+***
+#### 2 May: Exam 2
+***
+
+- ~10 problems
+- Possibility of subjective answers
+- Chapter 9, chapter 10, and the first three sections of 17
+- Traits classes
+- Callbacks: how the different methods work, why we use callbacks, and what the goal is
+- Lambda functions
+- Commonality of Behavior
+- Commonality of Implementation
+- Virtual constructors
